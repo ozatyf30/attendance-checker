@@ -406,7 +406,7 @@ function resolve(rawName,email,role){
   const ranked=cfg.roster.map(n=>({n,s:scoreName(key,norm(n))})).sort((a,b)=>b.s-a.s);
   const best=ranked[0],second=ranked[1]||{s:0};
   if(!forced&&best&&best.s>=.8&&best.s-second.s>=.08) return {to:best.n,how:"fuzzy",key,score:best.s};
-  return {to:null,how:"review",key,guess:best&&best.s>=.5?best.n:"",tie:best&&second.s&&best.s-second.s<.08?second.n:"",score:best?best.s:0};
+  return {to:null,how:"review",key,guess:best&&best.s>=.5?best.n:"",tie:best&&best.s>=.5&&second.s&&best.s-second.s<.08?second.n:"",score:best?best.s:0};
 }
 
 /* ---------- analysis ---------- */
