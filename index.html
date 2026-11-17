@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>مراجعة الحضور</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a register book — one sheet per session, students as ruled rows, a time strip on each row showing exactly when they were in the room */
+:root{
+  --bg:#F3F5F4; --sheet:#FFFFFF; --ink:#16201D; --ink-2:#4A5753; --ink-3:#7D8985; --rule:#DFE5E2; --rule-2:#EDF1EF;
+  --accent:#0E6B5C; --accent-soft:#DCEFEA; --accent-ink:#FFFFFF;
+  --ok:#1E8A4C; --ok-soft:#DDF2E4; --mid:#B7791F; --mid-soft:#FBEFD9; --part:#C2571A; --part-soft:#FBE3D5; --low:#C0353A; --low-soft:#F8DCDD;
+  --seg:#0E6B5C; --break:#E9ECEB;
+  --f-display:"Readex Pro","IBM Plex Sans Arabic",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1513; --sheet:#161E1B; --ink:#E7EEEB; --ink-2:#A9B6B1; --ink-3:#77857F; --rule:#26312D; --rule-2:#1D2724;
+  --accent:#3FB59C; --accent-soft:#163A32; --accent-ink:#06211B;
+  --ok:#4CC27A; --ok-soft:#173826; --mid:#E0A845; --mid-soft:#3A2D14; --part:#EE8A4E; --part-soft:#3D2416; --low:#F06C70; --low-soft:#3E1C1E;
+  --seg:#3FB59C; --break:#222C29; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1513; --sheet:#161E1B; --ink:#E7EEEB; --ink-2:#A9B6B1; --ink-3:#77857F; --rule:#26312D; --rule-2:#1D2724;
+  --accent:#3FB59C; --accent-soft:#163A32; --accent-ink:#06211B;
+  --ok:#4CC27A; --ok-soft:#173826; --mid:#E0A845; --mid-soft:#3A2D14; --part:#EE8A4E; --part-soft:#3D2416; --low:#F06C70; --low-soft:#3E1C1E;
+  --seg:#3FB59C; --break:#222C29; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+bdi,.ltr{direction:ltr;unicode-bidi:isolate}
+.num{font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;font-weight:600}
+h1{font-size:1.55rem;letter-spacing:-.01em}
+h2{font-size:1.15rem}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:40px;height:40px;border-radius:10px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink);flex:none}
+.brand p{margin:0;color:var(--ink-3);font-size:.85rem}
+.tabs{display:flex;gap:4px;background:var(--sheet);border:1px solid var(--rule);border-radius:999px;padding:4px}
+.tab{border:0;background:transparent;padding:6px 14px;border-radius:999px;color:var(--ink-2);font-weight:500;font-size:.9rem}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+
+/* drop zone */
+.drop{display:flex;align-items:center;gap:16px;flex-wrap:wrap;border:1.5px dashed var(--rule);background:var(--sheet);border-radius:14px;padding:14px 18px;transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop .txt{flex:1 1 260px;min-width:0}
+.drop strong{font-family:var(--f-display);font-weight:600}
+.drop .sub{color:var(--ink-3);font-size:.85rem}
+.btn{border:1px solid var(--rule);background:var(--sheet);border-radius:10px;padding:8px 14px;font-weight:500;font-size:.9rem;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+.btn.danger{color:var(--low)}
+.btn:disabled{opacity:.5;cursor:default}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap}
+.paste{width:100%;min-height:120px;border:1px solid var(--rule);border-radius:10px;background:var(--bg);padding:10px;font-family:var(--f-mono);font-size:.78rem;direction:ltr}
+
+.banner{border-radius:12px;padding:10px 14px;font-size:.9rem;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.banner.info{background:var(--accent-soft)}
+.banner.warn{background:var(--mid-soft)}
+.banner.err{background:var(--low-soft)}
+
+/* sheet */
+.sheet{background:var(--sheet);border:1px solid var(--rule);border-radius:16px;overflow:hidden}
+.sheet-head{padding:18px 20px 14px;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--rule)}
+.sheet-head .eyebrow{font-size:.78rem;color:var(--ink-3);letter-spacing:.04em}
+.dayline{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.daypick{border:1px solid var(--rule);background:var(--bg);border-radius:8px;padding:4px 8px;font-size:.88rem}
+.pill-new{font-size:.75rem;background:var(--mid-soft);color:var(--mid);padding:2px 8px;border-radius:999px;font-weight:600}
+.facts{display:flex;flex-wrap:wrap;gap:6px 22px}
+.fact{display:flex;flex-direction:column;min-width:0}
+.fact b{font-family:var(--f-display);font-size:1.25rem;font-weight:600;line-height:1.2}
+.fact span{font-size:.78rem;color:var(--ink-3)}
+.bar-summary{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--rule-2);min-width:160px}
+.bar-summary i{display:block;height:100%}
+
+/* student detail */
+.nm{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-weight:500;border-radius:6px}
+.nm:hover bdi{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--ink-3)}
+.nm:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nm svg{color:var(--ink-3);transition:transform .15s}
+.srow.open .nm svg{transform:rotate(180deg)}
+.srow.open td{background:var(--accent-soft);border-bottom-color:transparent}
+.blipn{display:inline-block;margin-top:2px;font-size:.72rem;color:var(--mid);background:var(--mid-soft);border-radius:999px;padding:0 7px;width:max-content}
+.drow td{padding:0 12px 14px;background:var(--accent-soft)}
+.detail{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.dstats{display:flex;flex-wrap:wrap;gap:8px}
+.ds{display:flex;flex-direction:column;background:var(--bg);border-radius:10px;padding:6px 12px;min-width:96px}
+.ds b{font-family:var(--f-display);font-size:1.05rem;font-weight:600}
+.ds span{font-size:.72rem;color:var(--ink-3)}
+.ds.bad b{color:var(--low)} .ds.warn b{color:var(--mid)}
+.draws{font-size:.82rem;color:var(--ink-2)}
+.dlog{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;border-inline-start:2px solid var(--rule);padding-inline-start:12px}
+.dlog li{display:flex;gap:12px;align-items:baseline;font-size:.86rem;position:relative;padding:2px 0}
+.dlog li::before{content:"";position:absolute;inset-inline-start:-17px;top:.6em;width:8px;height:8px;border-radius:50%;background:var(--seg)}
+.dlog li.out::before{background:var(--low)} .dlog li.brk::before{background:var(--ink-3)} .dlog li.blip::before{background:var(--mid);width:6px;height:6px;inset-inline-start:-16px}
+.dlog li.end::before{background:var(--ink)}
+.dlog li.blip{color:var(--ink-2);font-size:.8rem}
+.dlog .dt{font-family:var(--f-mono);font-size:.8rem;min-width:118px;color:var(--ink-2)}
+.dnote{margin:0;font-size:.78rem;color:var(--ink-3)}
+.cardbtn{border:0;background:transparent;color:var(--ink-3);padding:3px 5px;border-radius:6px;margin-inline-start:6px;vertical-align:middle;line-height:0}
+.cardbtn:hover{background:var(--accent-soft);color:var(--accent)}
+.dhead{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.modal{position:fixed;inset:0;background:rgba(10,16,14,.55);z-index:40;display:grid;place-items:center;padding:16px}
+.mbox{background:var(--sheet);border-radius:14px;padding:16px;max-width:min(760px,100%);max-height:calc(100% - 20px);overflow:auto;display:flex;flex-direction:column;gap:10px}
+.mtop{display:flex;justify-content:space-between;align-items:center}
+.mbox p{margin:0;font-size:.88rem;color:var(--ink-2)}
+.mbox img{width:100%;border:1px solid var(--rule);border-radius:10px}
+.reset{border-color:var(--low-soft)}
+.rsh{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.rsh>div{flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:6px}
+/* quiz */
+.qbar{height:12px;background:var(--rule-2);border-radius:99px;overflow:hidden;min-width:160px}
+.qbar i{display:block;height:100%;border-radius:99px}
+.qbar i.full,.qcol i.full{background:var(--ok)} .qbar i.good,.qcol i.good{background:var(--mid)} .qbar i.part,.qcol i.part{background:var(--part)} .qbar i.low,.qcol i.low{background:var(--low)}
+.qtbl{min-width:760px}
+.chip.warnchip{background:var(--mid-soft);color:var(--mid)}
+.qs{padding:14px 20px;border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:10px}
+.qgrid{display:flex;gap:8px;align-items:flex-end;overflow-x:auto;padding-bottom:4px;direction:ltr}
+.qq{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:46px;flex:1;padding:6px 4px;border-radius:10px}
+.qq.hard{background:var(--low-soft)}
+.qcol{height:90px;width:22px;background:var(--rule-2);border-radius:6px;display:flex;align-items:flex-end;overflow:hidden}
+.qcol i{display:block;width:100%;border-radius:6px 6px 0 0}
+.qq b{font-family:var(--f-mono);font-size:.78rem;font-weight:500}
+.qq span{font-size:.72rem;color:var(--ink-3);direction:rtl}
+/* breaks band */
+.breaks{padding:12px 20px;border-bottom:1px solid var(--rule);display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.bh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bh h3{font-size:.95rem}
+.bsrc{font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--rule-2);color:var(--ink-2)}
+.bsrc.man{background:var(--accent-soft);color:var(--accent)}
+.bsum{font-size:.8rem;color:var(--ink-3)}
+.blist{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bchip{display:inline-flex;align-items:center;gap:8px;background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:4px 4px 4px 10px;padding-inline-start:10px;font-size:.85rem}
+.bchip .bn{color:var(--ink-3);font-size:.78rem}
+.bchip b{font-family:var(--f-mono);font-weight:500}
+.bchip .bd{color:var(--ink-2);font-size:.78rem}
+.badd{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.85rem;color:var(--ink-2)}
+.badd input{border:1px solid var(--rule);border-radius:8px;background:var(--sheet);padding:4px 6px;direction:ltr;font-family:var(--f-mono);font-size:.82rem}
+/* non-students */
+.others{border-top:1px solid var(--rule);background:var(--bg)}
+.oh{padding:12px 20px 4px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.oh h3{font-size:.95rem}.oh span{font-size:.8rem;color:var(--ink-3)}
+.otbl{min-width:720px}.otbl td{border-bottom-color:var(--rule)}
+.otbl .tl .pc.in{background:var(--ink-3)}
+.otbl .tl .pc.out{background:var(--low);opacity:.35}
+/* review */
+.review{border-bottom:1px solid var(--rule);background:var(--mid-soft);padding:14px 20px;display:flex;flex-direction:column;gap:10px}
+.review h3{font-size:1rem;display:flex;align-items:center;gap:8px}
+.review .hint{font-size:.85rem;color:var(--ink-2);margin:0}
+.rv-list{display:flex;flex-direction:column;gap:6px}
+.rvh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.rvbtns{display:flex;gap:6px}
+.rv{display:grid;grid-template-columns:minmax(0,1.2fr) auto minmax(0,1.4fr) auto;gap:10px;align-items:center;background:var(--sheet);border-radius:10px;padding:8px 12px}
+.rv .raw{font-weight:600;overflow-wrap:anywhere}
+.rv .meta{font-size:.8rem;color:var(--ink-3)}
+.rv select{width:100%;min-width:0;border:1px solid var(--rule);border-radius:8px;padding:6px 8px;background:var(--bg)}
+@media (max-width:720px){.rv{grid-template-columns:1fr;}}
+
+/* table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:820px}
+th{font-size:.75rem;font-weight:500;color:var(--ink-3);text-align:start;padding:10px 12px;border-bottom:1px solid var(--rule);white-space:nowrap;position:relative}
+td{padding:9px 12px;border-bottom:1px solid var(--rule-2);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.rank{color:var(--ink-3);width:34px;font-size:.85rem}
+td.name{font-weight:500;white-space:nowrap}
+td.name small{display:block;color:var(--ink-3);font-weight:400;font-size:.75rem}
+td.tot{font-family:var(--f-mono);font-size:.85rem;white-space:nowrap;direction:ltr;text-align:end}
+td.pct{width:92px}
+.pctv{display:flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:.85rem}
+.notes{font-size:.8rem;color:var(--ink-2);display:flex;flex-direction:column;gap:2px;min-width:150px}
+.tl{position:relative;height:18px;background:var(--rule-2);border-radius:5px;min-width:220px;direction:ltr;overflow:hidden}
+.tl .brk{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,var(--break) 0 4px,transparent 4px 8px);border-inline:1px dashed var(--rule)}
+.tl .pc{position:absolute;top:3px;bottom:3px;min-width:4px}
+.tl .pc.in{background:var(--seg)}
+.tl .pc.out{background:var(--low)}
+.tl .pc.bo{background:repeating-linear-gradient(135deg,var(--ink-3) 0 2px,transparent 2px 5px);opacity:.55}
+.tl .pc:hover{filter:brightness(1.15);outline:1.5px solid var(--ink);outline-offset:0;z-index:2}
+.tl{cursor:crosshair}
+.tip{position:fixed;z-index:30;pointer-events:none;background:var(--ink);color:var(--bg);border-radius:8px;padding:6px 10px;font-size:.8rem;line-height:1.4;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.2);transform:translate(-50%,calc(-100% - 10px))}
+.tip b{font-family:var(--f-mono);font-weight:500;direction:ltr;unicode-bidi:isolate}
+.tip .k{display:inline-block;width:8px;height:8px;border-radius:50%;margin-inline-end:6px;vertical-align:middle}
+.tl .cur{position:absolute;top:0;bottom:0;width:1px;background:var(--ink);opacity:.5;pointer-events:none}
+.axis{position:relative;height:16px;direction:ltr;min-width:220px}
+.axis span{position:absolute;top:0;transform:translateX(-50%);font-size:.68rem;color:var(--ink-3);font-family:var(--f-mono);white-space:nowrap}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.st::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.st.full{background:var(--ok-soft);color:var(--ok)}
+.st.good{background:var(--mid-soft);color:var(--mid)}
+.st.part{background:var(--part-soft);color:var(--part)}
+.st.low{background:var(--low-soft);color:var(--low)}
+.st.abs{background:var(--rule-2);color:var(--ink-3)}
+
+.absent{padding:14px 20px;border-top:1px solid var(--rule);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.absent h3{font-size:.95rem}
+.chip{background:var(--low-soft);color:var(--low);border-radius:999px;padding:3px 10px;font-size:.82rem;font-weight:500}
+.chip.muted{background:var(--rule-2);color:var(--ink-2)}
+.foot{padding:12px 20px;border-top:1px solid var(--rule);display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:var(--ink-3);align-items:center}
+.legend .sw{display:inline-block;width:14px;height:8px;border-radius:2px;vertical-align:middle;margin-inline-end:4px}
+details.auto{padding:0 20px 14px;font-size:.85rem}
+details.auto summary{cursor:pointer;color:var(--ink-2);padding:10px 0}
+.amap{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:6px}
+.amap div{display:flex;gap:8px;align-items:center;min-width:0;background:var(--bg);border-radius:8px;padding:5px 10px}
+.amap .from{color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.amap .to{font-weight:500;white-space:nowrap}
+
+/* cumulative */
+.heat td.c{text-align:center;font-family:var(--f-mono);font-size:.78rem;padding:6px 4px;min-width:52px}
+.heat td.c span{display:block;border-radius:6px;padding:4px 0}
+.heat th.d{text-align:center;padding-inline:4px}
+.heat th.d small{display:block;font-size:.68rem}
+.c-full{background:var(--ok-soft);color:var(--ok)} .c-good{background:var(--mid-soft);color:var(--mid)}
+.c-part{background:var(--part-soft);color:var(--part)} .c-low{background:var(--low-soft);color:var(--low)}
+.c-abs{background:var(--rule-2);color:var(--ink-3)}
+.avg{font-family:var(--f-mono);font-weight:600}
+
+/* settings */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card p{margin:0;color:var(--ink-2);font-size:.88rem}
+.card textarea{width:100%;min-height:300px;border:1px solid var(--rule);border-radius:10px;background:var(--bg);padding:10px;direction:ltr;font-size:.88rem;line-height:1.7}
+.card input[type=text]{width:100%;border:1px solid var(--rule);border-radius:10px;background:var(--bg);padding:8px 10px;direction:ltr}
+.list{display:flex;flex-direction:column;gap:4px;max-height:360px;overflow:auto}
+.li{display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--bg);border-radius:8px;font-size:.85rem;min-width:0}
+.li .src{font-size:.68rem;color:var(--ink-3);background:var(--rule-2);border-radius:999px;padding:0 6px;flex:none}
+.li .a{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;text-align:start}
+.li .b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}
+.x{border:0;background:transparent;color:var(--ink-3);padding:2px 6px;border-radius:6px}
+.x:hover{color:var(--low);background:var(--low-soft)}
+.empty{padding:40px 20px;text-align:center;color:var(--ink-2);display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:10px;font-size:.88rem;z-index:20;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+textarea.copybox{width:100%;min-height:200px;border:1px solid var(--rule);border-radius:10px;background:var(--bg);padding:10px;font-size:.85rem}
+@media (max-width:560px){h1{font-size:1.3rem}.fact b{font-size:1.1rem}.sheet-head,.review,.absent,.foot{padding-inline:14px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap" dir="rtl" lang="ar">
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5M8 16l2 2 4-4"/></svg>
+      </div>
+      <div><h1>مراجعة الحضور</h1><p>حضور تيمز ونتيجة كويز Socrative في مكان واحد</p></div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-day" data-view="day" aria-selected="true">تقرير اليوم</button>
+      <button class="tab" role="tab" id="tab-quiz" data-view="quiz" aria-selected="false">الكويز</button>
+      <button class="tab" role="tab" id="tab-set" data-view="set" aria-selected="false">الطلبة والأسماء</button>
+    </nav>
+  </header>
+
+  <section class="drop" id="drop">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+    <div class="txt">
+      <strong id="dropTitle">اسحب ملف الـ Attendance هنا</strong>
+      <div class="sub" id="dropSub">الملف اللي بينزل من تيمز، أو الصق الجدول نفسه لو نسخته.</div>
+    </div>
+    <div class="row-actions">
+      <label class="btn primary" for="file">اختار ملف</label>
+      <input type="file" id="file" accept=".csv,.txt,.tsv,.xlsx,.xls,text/csv,text/plain" hidden>
+      <button class="btn" id="pasteBtn" type="button">لصق الجدول</button>
+    </div>
+    <div id="pasteBox" hidden style="width:100%">
+      <textarea id="pasteArea" class="paste" placeholder="Name	Join Time	Leave Time	Duration ..."></textarea>
+      <div class="row-actions" style="margin-top:8px"><button class="btn primary" id="pasteGo" type="button">احسب</button><button class="btn ghost" id="pasteCancel" type="button">إلغاء</button></div>
+    </div>
+  </section>
+
+  <div id="banner"></div>
+  <main id="view"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+<div class="tip" id="tip" dir="rtl" hidden></div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const IGN="__ignore__";
+const DEF_CFG={roster:[],aliases:{},ids:{},ignoreDomains:["xceedcc.com","te.eg"]};
+
+/* ---------- state ---------- */
+let cfg=structuredClone(DEF_CFG), current=null, view="day", openName=null, lastDay=null, quiz=null, xlsxLib=null;
+
+/* ---------- storage: this browser only ---------- */
+const LS={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const START_CFG={"roster":[],"aliases":{},"ids":{},"qaliases":{},"ignoreDomains":["xceedcc.com"]};
+function initStore(){
+  const c=LS.get("att.cfg");
+  cfg=Object.assign(structuredClone(DEF_CFG),c||structuredClone(START_CFG));
+  cfg.qaliases=cfg.qaliases||{};
+  if(!c) LS.set("att.cfg",cfg);
+  const last=LS.get("att.last");if(last&&last.up&&last.up.rows) current={kind:"upload",up:last.up,breaks:last.breaks??null};
+  const q=LS.get("att.quiz");if(q&&q.entries) quiz=q;
+}
+function persistCfg(){if(!LS.set("att.cfg",cfg))toast("المتصفح مش سامح بالحفظ، التعديل هيضيع لما تقفل الصفحة")}
+function persistLast(){if(current&&current.up)LS.set("att.last",{up:current.up,breaks:current.breaks??null})}
+
+/* ---------- time helpers ---------- */
+const pad=n=>String(n).padStart(2,"0");
+function clock(s){let h=Math.floor(s/3600),m=Math.floor(s%3600/60);const h12=((h+11)%12)+1;return h12+":"+pad(m)}
+function dur(s){s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h}h ${pad(m)}m`:`${m}m`}
+const AR_DAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+function dayName(date){const [y,m,d]=date.split("-").map(Number);return AR_DAYS[new Date(y,m-1,d).getDay()]}
+function dmy(date){const [y,m,d]=date.split("-");return `${+d}/${+m}`}
+
+/* ---------- parsing the Teams file ---------- */
+function decode(buf){
+  const b=new Uint8Array(buf);
+  if(b[0]===0xFF&&b[1]===0xFE) return new TextDecoder("utf-16le").decode(b);
+  if(b[0]===0xFE&&b[1]===0xFF) return new TextDecoder("utf-16be").decode(b);
+  // UTF-16 without BOM: many zero bytes
+  let z=0;for(let i=1;i<Math.min(b.length,400);i+=2) if(b[i]===0) z++;
+  if(z>100) return new TextDecoder("utf-16le").decode(b);
+  return new TextDecoder("utf-8").decode(b);
+}
+function splitLine(line,delim){
+  if(delim==="\t") return line.split("\t");
+  const out=[];let cur="",q=false;
+  for(let i=0;i<line.length;i++){const c=line[i];
+    if(q){if(c==='"'){if(line[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}
+    else if(c==='"') q=true; else if(c===delim){out.push(cur);cur=""} else cur+=c}
+  out.push(cur);return out;
+}
+const TS=/(\d{1,2})\/(\d{1,2})\/(\d{2,4}),?\s+(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)?/i;
+function parseTS(s){
+  const m=TS.exec(s||"");if(!m) return null;
+  let [_,mo,d,y,h,mi,se,ap]=m;y=+y;if(y<100)y+=2000;h=+h;
+  if(ap){ap=ap.toUpperCase();if(ap==="PM"&&h<12)h+=12;if(ap==="AM"&&h===12)h=0}
+  return {date:`${y}-${pad(mo)}-${pad(d)}`,sec:h*3600+(+mi)*60+(+se)};
+}
+function parseReport(text){
+  text=text.replace(/^﻿/,"");
+  const lines=text.split(/\r?\n/);
+  let title="";
+  for(const l of lines){const m=/^\s*Meeting title[\t,]\s*"?([^"\t]+)"?/i.exec(l);if(m){title=m[1].trim();break}}
+  let start=lines.findIndex(l=>/^\s*3\.\s*In-Meeting Activities/i.test(l));
+  let hi=-1;
+  if(start>=0){for(let i=start+1;i<lines.length;i++) if(/join time/i.test(lines[i])){hi=i;break}}
+  else hi=lines.findIndex(l=>/^\s*"?name"?[\t,]/i.test(l)&&/join time/i.test(l)&&/leave time/i.test(l));
+  if(hi<0) throw new Error("نوع الملف ده مش معروف عندي. لازم يبقى ملف Attendance من تيمز، أو جدول فيه أعمدة Name وJoin Time وLeave Time.");
+  const delim=lines[hi].includes("\t")?"\t":",";
+  const head=splitLine(lines[hi],delim).map(h=>h.trim().toLowerCase());
+  const col=n=>head.findIndex(h=>h.startsWith(n));
+  const ci={name:col("name"),join:col("join"),leave:col("leave"),email:col("email"),role:col("role")};
+  const rows=[];let date=null;
+  for(let i=hi+1;i<lines.length;i++){
+    const l=lines[i];if(!l.trim()) {if(rows.length) break; else continue}
+    if(/^\s*\d+\.\s+[A-Z]/.test(l)) break;
+    const c=splitLine(l,delim);
+    const a=parseTS(c[ci.join]),b=parseTS(c[ci.leave]);
+    if(!a||!b) continue;
+    date=date||a.date;
+    let e=b.sec;if(b.date!==a.date&&e<a.sec) e+=86400;
+    rows.push({name:(c[ci.name]||"").trim(),email:ci.email>=0?(c[ci.email]||"").trim():"",role:ci.role>=0?(c[ci.role]||"").trim():"",s:a.sec,e});
+  }
+  if(!rows.length) throw new Error("لقيت الجدول بس مافيهوش ولا صف فيه وقت دخول وخروج.");
+  return {title,date,rows};
+}
+
+/* ---------- name matching ---------- */
+function norm(s){return String(s||"").toLowerCase().replace(/\(\s*unverified\s*\)/g," ").replace(/\d+/g," ").replace(/[^a-z؀-ۿ]+/g," ").trim().replace(/\s+/g," ")}
+function idsOf(s){return (String(s||"").match(/\d{5,}/g)||[])}
+function lev(a,b){if(a===b)return 0;const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let p=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+const sim=(a,b)=>1-lev(a,b)/Math.max(a.length,b.length,1);
+function scoreName(raw,ros){
+  const R=raw.split(" ").filter(Boolean),Q=ros.split(" ").filter(Boolean);if(!R.length||!Q.length)return 0;
+  // ordered token alignment
+  const dp=Array.from({length:R.length+1},()=>Array(Q.length+1).fill(0));
+  for(let i=1;i<=R.length;i++)for(let j=1;j<=Q.length;j++){const s=sim(R[i-1],Q[j-1]);dp[i][j]=Math.max(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]+(s>=.7?s:0))}
+  let tok=dp[R.length][Q.length]/R.length;
+  const r=R.join(""),q=Q.join("");
+  let pre=sim(r,q.slice(0,r.length));
+  let sc=Math.max(tok,pre);
+  if(sim(R[0],Q[0])<.7 && !q.startsWith(r.slice(0,4))) sc*=.55;
+  return sc;
+}
+function resolve(rawName,email,role){
+  if(/organizer/i.test(role)) return {to:IGN,how:"organizer"};
+  const dom=(email.split("@")[1]||"").toLowerCase();
+  if(dom&&cfg.ignoreDomains.some(d=>d&&dom.endsWith(d.toLowerCase()))) return {to:IGN,how:"domain"};
+  const key=norm(rawName);
+  const forced=cfg.aliases[key]==="__review__";
+  if(!forced&&cfg.aliases[key]!==undefined && (cfg.aliases[key]===IGN||cfg.roster.includes(cfg.aliases[key]))) return {to:cfg.aliases[key],how:"alias",key};
+  if(!forced) for(const id of idsOf(rawName)) if(cfg.ids[id]&&cfg.roster.includes(cfg.ids[id])) return {to:cfg.ids[id],how:"id",key};
+  const ranked=cfg.roster.map(n=>({n,s:scoreName(key,norm(n))})).sort((a,b)=>b.s-a.s);
+  const best=ranked[0],second=ranked[1]||{s:0};
+  if(!forced&&best&&best.s>=.8&&best.s-second.s>=.08) return {to:best.n,how:"fuzzy",key,score:best.s};
+  return {to:null,how:"review",key,guess:best&&best.s>=.5?best.n:"",tie:best&&second.s&&best.s-second.s<.08?second.n:"",score:best?best.s:0};
+}
+
+/* ---------- analysis ---------- */
+function merge(iv){iv=iv.slice().sort((a,b)=>a[0]-b[0]);const out=[];for(const [s,e] of iv){if(out.length&&s<=out[out.length-1][1])out[out.length-1][1]=Math.max(out[out.length-1][1],e);else out.push([s,e])}return out}
+const sumIv=iv=>iv.reduce((t,[s,e])=>t+(e-s),0);
+function overlap(iv,a,b){let t=0;for(const [s,e] of iv){const x=Math.max(s,a),y=Math.min(e,b);if(y>x)t+=y-x}return t}
+const enc=iv=>iv.map(([s,e])=>s+"-"+e).join(";");
+const dec=str=>(str||"").split(";").filter(Boolean).map(p=>p.split("-").map(Number));
+
+function analyze(studentsIv,roster,manual){
+  const names=Object.keys(studentsIv).filter(n=>studentsIv[n].length);
+  if(!names.length) return null;
+  const merged={};for(const n of names) merged[n]=merge(studentsIv[n]);
+  let lo=Infinity,hi=-Infinity;for(const n of names){lo=Math.min(lo,merged[n][0][0]);hi=Math.max(hi,merged[n][merged[n].length-1][1])}
+  // presence count per minute
+  const N=names.length,cnt=[];
+  for(let t=lo;t<hi;t+=60){let c=0;for(const n of names){if(merged[n].some(([s,e])=>t>=s&&t<e))c++}cnt.push(c)}
+  const peak=Math.max(...cnt);
+  // actual start/end: when at least half of the attendees are in
+  const half=Math.max(1,Math.ceil(peak*.5));
+  let i0=cnt.findIndex(c=>c>=half),i1=cnt.length-1-[...cnt].reverse().findIndex(c=>c>=half);
+  if(i0<0){i0=0;i1=cnt.length-1}
+  const start=lo+i0*60,end=Math.min(hi,lo+(i1+1)*60);
+  // breaks: stretches ≥8 min where under 70% of the peak is in
+  const thr=peak*.7,breaks=[];let run=null;
+  for(let k=i0;k<=i1;k++){const t=lo+k*60;if(cnt[k]<thr){if(!run)run=[t,t];run[1]=t+60}else if(run){breaks.push(run);run=null}}
+  if(run) breaks.push(run);
+  const auto=breaks.filter(([a,b])=>b-a>=480&&a>start+600&&b<end-600);
+  const brk=Array.isArray(manual)?merge(manual.map(([a,b])=>[Math.max(a,start),Math.min(b,end)]).filter(([a,b])=>b>a)):auto;
+  const session=end-start,brkSec=brk.reduce((t,[a,b])=>t+b-a,0),effective=Math.max(60,session-brkSec);
+  const rows=names.map(n=>{
+    const iv=merged[n],total=sumIv(iv);
+    const P=pieces(iv,{start,end,brk});
+    const outSec=P.filter(p=>p.k==="out").reduce((t,p)=>t+p.b-p.a,0);
+    const pct=Math.max(0,Math.min(100,Math.round((effective-outSec)/effective*100)));
+    const notes=[],byGap={};
+    for(const p of P){if(p.k!=="out")continue;const g=byGap[p.ga]=byGap[p.ga]||{a:p.ga,b:p.gb,out:0,pre:p.pre,post:p.post};g.out+=p.b-p.a}
+    for(const g of Object.values(byGap)){if(g.out<600)continue;
+      if(g.pre)notes.push(`دخول متأخر ${clock(g.b)}`);else if(g.post)notes.push(`خروج بدري ${clock(g.a)}`);else notes.push(`غياب ${clock(g.a)} ← ${clock(g.b)}`)}
+    const blips=[];for(let i=1;i<iv.length;i++){const a=iv[i-1][1],b=iv[i][0];if(b>a&&b-a<60&&a>start&&b<end)blips.push([a,b])}
+    return {n,iv,total,pct,notes,blips,P,status:status(pct)};
+  }).sort((a,b)=>b.pct-a.pct||b.total-a.total);
+  const present=new Set(names);
+  const absent=roster.filter(n=>!present.has(n));
+  const extra=names.filter(n=>!roster.includes(n));
+  const avg=rows.reduce((t,r)=>t+r.total,0)/rows.length;
+  return {start,end,session,brk,auto,manual:Array.isArray(manual),effective,rows,absent,extra,avg};
+}
+function status(p){return p>=90?["full","كامل"]:p>=75?["good","جيد"]:p>=50?["part","غير جيد"]:["low","ضعيف"]}
+
+/* ---------- build a day from an upload ---------- */
+function dayFromUpload(up){
+  const studentsIv={},auto=[],review={},ignored={};
+  for(const r of up.rows){
+    const res=resolve(r.name,r.email,r.role);
+    if(res.to===IGN){const k=r.name.replace(/\s*\(unverified\)\s*/i,"").trim()+(r.email?" · "+r.email:"");
+      const o=ignored[k]=ignored[k]||{name:r.name.replace(/\s*\(unverified\)\s*/i,"").trim(),why:res.how==="organizer"?"منظم الميتنج":res.how==="domain"?r.email:"متعلّم إنه مش طالب",iv:[]};o.iv.push([r.s,r.e]);continue}
+    if(res.to){(studentsIv[res.to]=studentsIv[res.to]||[]).push([r.s,r.e]);auto.push({raw:r.name,key:res.key,to:res.to,how:res.how});continue}
+    const k=res.key;
+    (review[k]=review[k]||{raw:r.name,key:k,guess:res.guess,tie:res.tie,iv:[],ids:new Set()}).iv.push([r.s,r.e]);
+    idsOf(r.name).forEach(i=>review[k].ids.add(i));
+  }
+  const seen=new Set(),autoU=[];for(const a of auto){if(a.key&&!seen.has(a.key)){seen.add(a.key);autoU.push(a)}}
+  return {date:up.date,title:up.title,studentsIv,auto:autoU,review:Object.values(review),others:Object.values(ignored).map(o=>({name:o.name,why:o.why,iv:merge(o.iv)}))};
+}
+
+/* ---------- review: names the tool couldn't place ---------- */
+function reviewPanel(items,src){
+  const opt=sel=>`<option value="">— اختار الطالب —</option>`+cfg.roster.map(n=>`<option ${n===sel?"selected":""}>${esc(n)}</option>`).join("");
+  return `<div class="review"><div class="rvh"><div><h3>محتاج تأكيدك في ${items.length} ${items.length===1?"اسم":"أسامي"}</h3>
+      <p class="hint">اختار صاحب كل اسم واضغط تأكيد، أو احذفه لو مش من طلابك. الأداة هتفتكر اختيارك المرة الجاية.</p></div>
+      ${items.length>1?`<div class="row-actions"><button class="btn primary" data-rvall type="button">أكّد الكل</button><button class="btn danger" data-rvdelall type="button">احذف الكل</button></div>`:""}</div>
+    <div class="rv-list">${items.map((r,i)=>`<div class="rv">
+      <div><div class="raw ltr" style="text-align:start">${esc(r.raw)}</div><div class="meta">${r.tie?`ممكن يكون ${esc(r.guess)} أو ${esc(r.tie)}`:r.guess?"أقرب اسم: "+esc(r.guess):r.hint?"غالباً مش من طلابك":"مالقيتش اسم قريب"}</div></div>
+      <div class="meta num ltr">${r.meta}</div>
+      <select data-rv="${i}" aria-label="صاحب الاسم ${esc(r.raw)}">${opt(r.tie?"":r.guess)}</select>
+      <div class="rvbtns"><button class="btn primary" data-rvok="${i}" type="button">تأكيد</button><button class="btn danger" data-rvdel="${i}" type="button" title="مش من طلابي">حذف</button></div></div>`).join("")}</div>
+  </div>`;
+}
+function wireReview(v,n,apply){
+  const val=i=>{const s=v.querySelector(`select[data-rv="${i}"]`);return s&&s.value};
+  v.querySelectorAll("[data-rvok]").forEach(b=>b.onclick=()=>{const x=val(+b.dataset.rvok);if(!x){toast("اختار الطالب الأول");return}apply(+b.dataset.rvok,x);persistCfg();render();toast("اتحفظ")});
+  v.querySelectorAll("[data-rvdel]").forEach(b=>b.onclick=()=>{apply(+b.dataset.rvdel,IGN);persistCfg();render();toast("اتحذف، ومش هيظهر تاني")});
+  const all=v.querySelector("[data-rvall]");if(all)all.onclick=()=>{let k=0,miss=0;for(let i=0;i<n;i++){const x=val(i);if(x){apply(i,x);k++}else miss++}
+    if(k){persistCfg();render();toast(miss?`اتأكد ${k}، و${miss} لسه من غير اختيار`:`اتأكد ${k}`)}else toast("مفيش ولا اسم متختارله طالب")};
+  const del=v.querySelector("[data-rvdelall]");if(del)del.onclick=()=>{
+    if(del.dataset.sure!=="1"){del.dataset.sure="1";del.textContent=`احذف ${n}؟ اضغط تاني`;setTimeout(()=>{if(del.isConnected){del.dataset.sure="";del.textContent="احذف الكل"}},4000);return}
+    for(let i=0;i<n;i++)apply(i,IGN);persistCfg();render();toast(`اتحذف ${n}`)};
+}
+
+/* ---------- rendering ---------- */
+function setBanner(html,kind="info"){$("#banner").innerHTML=html?`<div class="banner ${kind}">${html}</div>`:""}
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,2600)}
+
+function pieces(iv,A){
+  const S=A.start,E=A.end,out=[];
+  const inS=iv.map(([a,b])=>[Math.max(a,S),Math.min(b,E)]).filter(([a,b])=>b>a);
+  // absent stretches inside the session
+  const gaps=[];let t=S;for(const [a,b] of inS){if(a>t)gaps.push([t,a]);t=Math.max(t,b)}if(t<E)gaps.push([t,E]);
+  for(const [a,b] of inS) out.push({k:"in",a,b});
+  const first=inS.length?inS[0][0]:E,last=inS.length?inS[inS.length-1][1]:S;
+  for(const [a,b] of gaps){
+    // blips: under a minute inside (a quick reconnect), under two at the edges — drawn as present
+    if(b-a<(a===S||b===E?120:60)){out.push({k:"in",a,b,blip:1});continue}
+    // split each gap around breaks
+    let cuts=[a,b];for(const [x,y] of A.brk){if(x>a&&x<b)cuts.push(x);if(y>a&&y<b)cuts.push(y)}
+    cuts=[...new Set(cuts)].sort((p,q)=>p-q);
+    for(let i=1;i<cuts.length;i++){const p=cuts[i-1],q=cuts[i],mid=(p+q)/2;
+      const inBrk=A.brk.some(([x,y])=>mid>=x&&mid<y);
+      out.push({k:inBrk?"bo":"out",a:p,b:q,ga:a,gb:b,pre:b<=first,post:a>=last});}
+  }
+  out.sort((x,y)=>x.a-y.a);
+  // someone who left a few minutes before the break started, or came back a few minutes after it ended,
+  // left for the break: up to 5 minutes next to a break counts as break
+  for(let i=0;i<out.length;i++){const p=out[i];if(p.k!=="out"||p.b-p.a>300)continue;
+    const nb=(out[i-1]&&out[i-1].k==="bo"&&out[i-1].b===p.a)||(out[i+1]&&out[i+1].k==="bo"&&out[i+1].a===p.b);
+    if(nb)p.k="bo"}
+  // join neighbouring present pieces so the bar reads as one block
+  const res=[];for(const p of out){const q=res[res.length-1];if(q&&q.k==="in"&&p.k==="in"&&q.b>=p.a){q.b=Math.max(q.b,p.b)}else res.push(Object.assign({},p))}
+  return res;
+}
+function timeline(iv,A,P){
+  const span=A.end-A.start||1,L=s=>((s-A.start)/span*100).toFixed(3)+"%",W=(a,b)=>((b-a)/span*100).toFixed(3)+"%";
+  return `<div class="tl" role="img" aria-label="${iv.map(([s,e])=>clock(s)+"–"+clock(e)).join("، ")}">`+
+    A.brk.map(([a,b])=>`<div class="brk" style="left:${L(a)};width:${W(a,b)}"></div>`).join("")+
+    (P||pieces(iv,A)).map(p=>`<div class="pc ${p.k}" style="left:${L(p.a)};width:${W(p.a,p.b)}" data-k="${p.k}" data-a="${p.a}" data-b="${p.b}" data-ga="${p.ga??""}" data-gb="${p.gb??""}" data-pre="${p.pre?1:""}" data-post="${p.post?1:""}"></div>`).join("")+`</div>`;
+}
+function axis(A){
+  const span=A.end-A.start||1,step=span>9000?3600:1800;let first=Math.ceil(A.start/step)*step,out="";
+  for(let t=first;t<=A.end;t+=step){const p=(t-A.start)/span*100;if(p<6||p>94)continue;out+=`<span style="left:${p}%">${clock(t)}</span>`}
+  return `<div class="axis">${out}</div>`;
+}
+
+function renderDay(){
+  const v=$("#view");
+  if(!current){
+    v.innerHTML=`<div class="sheet"><div class="empty"><h2>ارفع ملف الحضور بتاع النهارده</h2><p>اسحب ملف الـ Attendance من تيمز على المربع اللي فوق، وهطلعلك مين حضر وقعد قد إيه.</p>${cfg.roster.length?"":`<p>وقبلها حط أسامي الطلبة في تبويب <b>الطلبة والأسماء</b>.</p>`}</div></div>`;return;
+  }
+  const up=dayFromUpload(current.up),studentsIv=up.studentsIv,title=up.title,date=up.date,manual=current.breaks??null,others=up.others;
+  const A=analyze(studentsIv,cfg.roster,manual);
+  lastDay={A,date,title};
+  const att=A?A.rows.length:0,tot=cfg.roster.length;
+  const bands={full:0,good:0,part:0,low:0};if(A)A.rows.forEach(r=>bands[r.status[0]]++);
+  const absN=A?A.absent.length:tot;
+  const seg=(k,c)=>tot?`<i style="width:${c/tot*100}%;background:var(--${k})"></i>`:"";
+
+  let html=`<div class="sheet">
+  <div class="sheet-head">
+    <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+      <div class="eyebrow">${esc(title||"محاضرة")}</div>
+      <div class="dayline"><h2>${dayName(date)} ${dmy(date)}</h2></div>
+    </div>
+    ${A?`<div class="facts">
+      <div class="fact"><b class="num">${att}<small style="font-size:.8rem;color:var(--ink-3)"> / ${tot}</small></b><span>حضروا</span></div>
+      <div class="fact"><b class="num ltr">${clock(A.start)}–${clock(A.end)}</b><span>المحاضرة · ${dur(A.session)}</span></div>
+      <div class="fact"><b class="num ltr">${dur(A.effective)}</b><span>وقت الشرح من غير البريك</span></div>
+      <div class="fact"><b class="num ltr">${dur(A.avg)}</b><span>متوسط الحضور</span></div>
+      <div class="fact" style="justify-content:center;gap:6px"><div class="bar-summary" title="كامل ${bands.full} · جيد ${bands.good} · غير جيد ${bands.part} · ضعيف ${bands.low} · غياب ${absN}">${seg("ok",bands.full)}${seg("mid",bands.good)}${seg("part",bands.part)}${seg("low",bands.low)}</div><span>${bands.full} كامل · ${bands.good} جيد · ${bands.part} غير جيد · ${bands.low} ضعيف · ${absN} غياب</span></div>
+    </div>`:""}
+  </div>`;
+  if(A){
+    const brkTot=A.brk.reduce((t,[a,b])=>t+b-a,0);
+    html+=`<div class="breaks">
+      <div class="bh"><h3>البريكات</h3><span class="bsrc ${A.manual?"man":""}">${A.manual?"محددة يدوي":"اتعرفت تلقائي من الملف"}</span>
+        <span class="bsum">${A.brk.length?`${A.brk.length} ${A.brk.length===1?"بريك":"بريكات"} · ${dur(brkTot)} مش محسوبين من النسبة`:"مفيش بريك محسوب"}</span></div>
+      <div class="blist">${A.brk.map(([a,b],i)=>`<span class="bchip"><span class="bn">بريك ${i+1}</span><b class="ltr num">${clock(a)} – ${clock(b)}</b><span class="bd">${dur(b-a)}</span><button class="x" data-bdel="${i}" aria-label="امسح البريك ${i+1}" type="button">✕</button></span>`).join("")}
+        <span class="badd"><label>من <input type="time" id="bFrom" step="60"></label><label>لـ <input type="time" id="bTo" step="60"></label><button class="btn" id="bAdd" type="button">أضف بريك</button></span>
+        ${A.manual?`<button class="btn ghost" id="bAuto" type="button">رجّع التلقائي</button>`:A.brk.length?`<button class="btn ghost" id="bNone" type="button">مفيش بريك النهارده</button>`:""}
+      </div></div>`;
+  }
+
+  if(up&&up.review.length){
+    const opt=(sel)=>`<option value="">— اختار الطالب —</option>`+cfg.roster.map(n=>`<option ${n===sel?"selected":""}>${esc(n)}</option>`).join("")+`<option value="${IGN}">مش طالب (تجاهل)</option>`;
+    html+=reviewPanel(up.review.map(r=>{const m=merge(r.iv);return {raw:r.raw,guess:r.guess,tie:r.tie,meta:`${dur(sumIv(m))} · ${clock(m[0][0])}–${clock(m[m.length-1][1])}`}}),"تيمز");
+  }
+
+  if(A){
+    html+=`<div class="tbl-wrap"><table><thead><tr><th>#</th><th>الطالب</th><th style="min-width:240px">${axis(A)}</th><th style="text-align:end">إجمالي الوقت</th><th>النسبة</th><th>الحالة</th><th>ملاحظات</th></tr></thead><tbody>`+
+    A.rows.map((r,i)=>`<tr class="srow${openName===r.n?" open":""}"><td class="rank num">${i+1}</td><td class="name"><button class="nm" data-open="${esc(r.n)}" type="button" aria-expanded="${openName===r.n}"><bdi>${esc(r.n)}</bdi><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><button class="cardbtn" data-card="${esc(r.n)}" type="button" title="نزّل صورة ملخص ${esc(r.n)}" aria-label="نزّل صورة ملخص ${esc(r.n)}">${ICON_IMG}</button>${cfg.roster.includes(r.n)?"":"<small>مش في القايمة الحالية</small>"}</td>
+      <td>${timeline(r.iv,A,r.P)}</td><td class="tot num">${dur(r.total)}</td>
+      <td class="pct"><div class="pctv num">${r.pct}%</div></td><td><span class="st ${r.status[0]}">${r.status[1]}</span></td>
+      <td><div class="notes">${r.notes.slice(0,2).map(esc).join("<br>")||'<span style="color:var(--ink-3)">—</span>'}${r.blips.length?`<span class="blipn">فصل سريع ${r.blips.length}×</span>`:""}</div></td></tr>`+
+      (openName===r.n?`<tr class="drow"><td colspan="7">${detailHTML(r,A,up)}</td></tr>`:"")).join("")+
+    `</tbody></table></div>`;
+    html+=`<div class="absent"><h3>الغياب (${A.absent.length})</h3>${A.absent.length?A.absent.map(n=>`<span class="chip"><bdi>${esc(n)}</bdi></span>`).join(""):'<span class="chip muted">مفيش غياب النهارده</span>'}</div>`;
+    if(others.length){
+      html+=`<div class="others"><div class="oh"><h3>مش طلبة (${others.length})</h3><span>دخلوا الميتنج بس مش بيتحسبوا في الحضور ولا النسب</span></div>
+      <div class="tbl-wrap"><table class="otbl"><tbody>${others.map(o=>{const t=sumIv(o.iv);return `<tr><td class="name"><bdi>${esc(o.name)}</bdi><small class="ltr" style="text-align:start">${esc(o.why)}</small></td>
+        <td>${timeline(o.iv,A)}</td><td class="tot num">${dur(t)}</td><td class="ltr num" style="color:var(--ink-2);font-size:.85rem;white-space:nowrap">${clock(o.iv[0][0])} – ${clock(o.iv[o.iv.length-1][1])}</td><td class="num" style="color:var(--ink-3);font-size:.8rem;white-space:nowrap">${o.iv.length} ${o.iv.length===1?"مرة":"مرات"} دخول</td></tr>`}).join("")}</tbody></table></div></div>`;
+    }
+  }else{
+    html+=`<div class="empty"><p>مفيش ولا طالب اتعرف عليه في الملف ده لسه. أكّد الأسامي اللي فوق.</p></div>`;
+  }
+
+  if(up&&up.auto.length){
+    html+=`<details class="auto"><summary>إزاي اتربطت الأسامي (${up.auto.length})</summary><div class="amap">`+
+    up.auto.map(a=>`<div><span class="from ltr" title="${esc(a.raw)}">${esc(a.raw)}</span><span>←</span><span class="to"><bdi>${esc(a.to.split(" ").slice(0,2).join(" "))}</bdi></span><button class="x" data-unlink="${esc(a.key)}" data-raw="${esc(a.raw)}" title="غلط؟ غيّره" type="button">تغيير</button></div>`).join("")+`</div></details>`;
+  }
+
+  html+=`<div class="foot"><div class="legend"><span><i class="sw" style="background:var(--seg)"></i>موجود</span><span><i class="sw" style="background:var(--low)"></i>خرج</span><span><i class="sw" style="background:repeating-linear-gradient(135deg,var(--ink-3) 0 2px,transparent 2px 4px)"></i>خرج وقت البريك</span><span>وقّف الماوس على أي جزء تشوف وقته</span></div>
+    <div class="row-actions">
+      ${A?`<button class="btn" id="copyRep" type="button">انسخ التقرير</button><button class="btn" id="csvRep" type="button">نزّل CSV</button>`:""}
+      <button class="btn ghost danger" id="clearDay" type="button">امسح الملف</button>
+    </div></div><div id="copyHolder"></div></div>`;
+  v.innerHTML=html;
+
+  /* wiring */
+  v.querySelectorAll("[data-card]").forEach(b=>b.onclick=e=>{e.stopPropagation();copyCard(b.dataset.card)});
+  v.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{openName=openName===b.dataset.open?null:b.dataset.open;const y=b.getBoundingClientRect().top;render();const nb=[...document.querySelectorAll("[data-open]")].find(x=>x.dataset.open===b.dataset.open);if(nb)window.scrollBy(0,nb.getBoundingClientRect().top-y)});
+  if(up){
+    wireReview(v,up.review.length,(i,val)=>{const r=up.review[i];cfg.aliases[r.key]=val;if(val!==IGN)r.ids.forEach(id=>cfg.ids[id]=val)});
+    v.querySelectorAll("[data-unlink]").forEach(b=>b.onclick=()=>{const k=b.dataset.unlink;cfg.aliases[k]="__review__";persistCfg();render()});
+  }
+  const setBreaks=list=>{current.breaks=list;persistLast();render()};
+  const toSec=v=>{const m=/^(\d{1,2}):(\d{2})/.exec(v||"");return m?(+m[1])*3600+(+m[2])*60:null};
+  const bAdd=$("#bAdd");if(bAdd)bAdd.onclick=()=>{
+    let a=toSec($("#bFrom").value),b=toSec($("#bTo").value);
+    if(a==null||b==null){toast("اكتب وقت البداية والنهاية");return}
+    // times like 1:10 typed as 01:10 inside a morning session mean PM
+    if(A){if(a<A.start-3*3600)a+=12*3600;if(b<A.start-3*3600)b+=12*3600}
+    if(b<=a){toast("وقت النهاية لازم يبقى بعد البداية");return}
+    setBreaks(merge([...(A?A.brk:[]),[a,b]]));
+  };
+  v.querySelectorAll("[data-bdel]").forEach(x=>x.onclick=()=>{const l=A.brk.filter((_,i)=>i!==+x.dataset.bdel);setBreaks(l)});
+  const bN=$("#bNone");if(bN)bN.onclick=()=>setBreaks([]);
+  const bA=$("#bAuto");if(bA)bA.onclick=()=>setBreaks(null);
+  const cp=$("#copyRep");if(cp)cp.onclick=()=>copyText(reportText(A,date,title),$("#copyHolder"));
+  const cv=$("#csvRep");if(cv)cv.onclick=()=>saveCSV(A,date);
+  const cd=$("#clearDay");if(cd)cd.onclick=()=>{
+    if(cd.dataset.sure!=="1"){cd.dataset.sure="1";cd.textContent="اضغط تاني للتأكيد";setTimeout(()=>{if(cd.isConnected){cd.dataset.sure="";cd.textContent="امسح الملف"}},4000);return}
+    current=null;LS.del("att.last");openName=null;render();toast("اتمسح")};
+}
+
+function clockS(s){let h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=Math.round(s%60);const h12=((h+11)%12)+1;return h12+":"+pad(m)+":"+pad(x)}
+function secs(n){n=Math.round(n);return n<60?`${n} ثانية`:dur(n)}
+function detailHTML(r,A,up){
+  const iv=r.iv,first=iv[0][0],last=iv[iv.length-1][1];
+  const outSec=r.P.filter(p=>p.k==="out").reduce((t,p)=>t+p.b-p.a,0);
+  const raws=up?[...new Set(up.auto.filter(a=>a.to===r.n).map(a=>a.raw.replace(/\s*\(unverified\)\s*/i,"").trim()))]:[];
+  const ev=dayEvents(r,A);
+  const stat=(v,l,c="")=>`<div class="ds ${c}"><b class="num ltr">${v}</b><span>${l}</span></div>`;
+  return `<div class="detail">
+    <div class="dhead"><div class="dstats">
+      ${stat(clock(first),"أول دخول")}${stat(clock(last),"آخر خروج")}${stat(dur(r.total),"إجمالي الوقت")}
+      ${stat(exitsOut(r,A),"مرات الخروج (برّه البريك)")}${stat(outSec?dur(outSec):"0","برّه وقت الشرح",outSec>=600?"bad":"")}
+      ${stat(r.blips.length,"فصل سريع (أقل من دقيقة)",r.blips.length>=3?"warn":"")}
+    </div><button class="btn" data-card="${esc(r.n)}" type="button">${ICON_IMG}نزّل صورة الملخص</button></div>
+    ${raws.length?`<div class="draws">دخل باسم: ${raws.map(x=>`<span class="ltr">${esc(x)}</span>`).join("، ")}</div>`:""}
+    <ol class="dlog">${ev.map(e=>`<li class="${e.k}"><span class="dt num ltr">${e.sec?clockS(e.t):clock(e.t)}${e.b&&e.k!=="blip"?` → ${clock(e.b)}`:""}</span><span>${esc(e.txt)}</span></li>`).join("")}</ol>
+    ${r.blips.length?`<p class="dnote">الفصل السريع غالباً من النت أو إن تيمز عمل reconnect. مش بيأثر على النسبة.</p>`:""}
+  </div>`;
+}
+function exitsOut(r,A){return dayEvents(r,A).filter(e=>e.k==="out"||(e.k==="end"&&e.t<A.end-120&&!A.brk.some(([x,y])=>e.t>=x-300&&e.t<=y+300))).length}
+function dayEvents(r,A){
+  const iv=r.iv,first=iv[0][0],last=iv[iv.length-1][1];
+  const ev=[];
+  ev.push({t:first,k:"in",txt:`دخل${first>A.start+60?` · بعد بداية المحاضرة بـ ${dur(first-A.start)}`:""}`});
+  for(let i=1;i<iv.length;i++){
+    const a=iv[i-1][1],b=iv[i][0],g=b-a;if(g<=0)continue;
+    if(g<60){ev.push({t:a,k:"blip",txt:`فصل ورجع بعد ${secs(g)}`,sec:true,b});continue}
+    const gp=r.P.filter(p=>p.ga===Math.max(a,A.start)&&p.k!=="in");
+    const o=gp.filter(p=>p.k==="out").reduce((t,p)=>t+p.b-p.a,0),bo=gp.filter(p=>p.k==="bo").reduce((t,p)=>t+p.b-p.a,0);
+    const kind=bo&&!o?"brk":"out";
+    ev.push({t:a,k:kind,b,txt:`خرج ${dur(g)}${bo&&!o?" · وقت البريك":bo?` · منهم ${dur(o)} برّه البريك`:""}`});
+  }
+  ev.push({t:last,k:"end",txt:last<A.end-120?`خرج ومارجعش · قبل النهاية بـ ${dur(A.end-last)}`:"آخر خروج · مع نهاية المحاضرة"});
+  // everything that happened during a break collapses into one line: total time out
+  const G=300,out=[],seen={};
+  for(const e of ev){
+    const bi=(e.k==="brk"||e.k==="blip")?A.brk.findIndex(([x,y])=>e.t>=x-G&&e.t<=y+G):-1;
+    if(bi<0){out.push(e);continue}
+    const gap=(e.b||e.t)-e.t;
+    if(!seen[bi]){const [x,y]=A.brk[bi];seen[bi]={t:e.t,k:"brk",b:e.b,tot:0,txt:"",bx:x,by:y};out.push(seen[bi])}
+    const g=seen[bi];g.tot+=gap;g.b=Math.max(g.b||0,e.b||e.t);
+  }
+  for(const g of Object.values(seen)) g.txt=`خرج وقت البريك · إجمالي ${dur(g.tot)}`;
+  return out;
+}
+const ICON_IMG=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>`;
+const CARD={bg:"#FFFFFF",soft:"#F3F5F4",ink:"#16201D",ink2:"#4A5753",ink3:"#7D8985",rule:"#DFE5E2",track:"#EDF1EF",accent:"#0E6B5C",low:"#C0353A",ok:"#1E8A4C",mid:"#B7791F",part:"#C2571A"};
+const FB='"IBM Plex Sans Arabic",system-ui,Tahoma,sans-serif',FD='"Readex Pro","IBM Plex Sans Arabic",system-ui,sans-serif',FM='"JetBrains Mono",ui-monospace,Menlo,monospace';
+function drawCard(r,A,date,title){
+  const ev=dayEvents(r,A),W=720,P=32,SC=2,lineH=30;
+  const H=P+30+44+18+ 2*64+12 +30+26+34 +24+ev.length*lineH +20+30+P;
+  const cv=document.createElement("canvas");cv.width=W*SC;cv.height=H*SC;
+  const c=cv.getContext("2d");c.scale(SC,SC);
+  const R=W-P;
+  const rr=(x,y,w,h,rad,fill)=>{c.beginPath();c.roundRect?c.roundRect(x,y,w,h,rad):c.rect(x,y,w,h);c.fillStyle=fill;c.fill()};
+  const txt=(t,x,y,font,color,align="right",dir="rtl")=>{c.font=font;c.fillStyle=color;c.textAlign=align;c.direction=dir;c.fillText(t,x,y)};
+  rr(0,0,W,H,0,CARD.bg);rr(0,0,W,6,0,CARD.accent);
+  let y=P+16;
+  txt(`${title?title+" · ":""}${dayName(date)} ${dmy(date)}`,R,y,`500 14px ${FB}`,CARD.ink3);
+  y+=40;
+  txt(r.n,R,y,`600 26px ${FD}`,CARD.ink,"right","ltr");
+  const stCol={full:CARD.ok,good:CARD.mid,part:CARD.part,low:CARD.low}[r.status[0]];
+  txt(r.pct+"%",P,y+4,`700 38px ${FD}`,stCol,"left","ltr");
+  txt(r.status[0]==="full"?`نسبة الحضور · ${r.status[1]}`:"نسبة الحضور",P,y+26,`500 12px ${FB}`,CARD.ink3,"left");
+  y+=18+16;
+  const outSec=r.P.filter(p=>p.k==="out").reduce((t,p)=>t+p.b-p.a,0);
+  const stats=[[clock(r.iv[0][0]),"أول دخول"],[clock(r.iv[r.iv.length-1][1]),"آخر خروج"],[dur(r.total),"إجمالي الوقت"],[String(exitsOut(r,A)),"مرات الخروج (برّه البريك)"],[outSec?dur(outSec):"0","برّه وقت الشرح",outSec>=600?CARD.low:null],[String(r.blips.length),"فصل سريع (أقل من دقيقة)",r.blips.length>=3?CARD.mid:null]];
+  const gap=10,bw=(W-2*P-2*gap)/3,bh=56;
+  stats.forEach(([v,l,col],i)=>{const row=Math.floor(i/3),colI=i%3;const x=R-(colI+1)*bw-colI*gap,yy=y+row*(bh+gap);
+    rr(x,yy,bw,bh,10,CARD.soft);txt(v,x+bw-14,yy+26,`600 19px ${FD}`,col||CARD.ink,"right","ltr");txt(l,x+bw-14,yy+45,`500 12px ${FB}`,CARD.ink3)});
+  y+=2*bh+gap+30;
+  txt("الحضور خلال المحاضرة",R,y,`600 14px ${FB}`,CARD.ink2);
+  y+=12;
+  const tx=P,tw=W-2*P,th=20,span=A.end-A.start||1,X=t=>tx+(t-A.start)/span*tw;
+  rr(tx,y,tw,th,6,CARD.track);
+  for(const p of r.P){const x0=X(p.a),w=Math.max(3,X(p.b)-x0);
+    if(p.k==="in")rr(x0,y+3,w,th-6,0,CARD.accent);
+    else if(p.k==="out")rr(x0,y+3,w,th-6,0,CARD.low);
+    else{c.save();c.beginPath();c.rect(x0,y+3,w,th-6);c.clip();c.strokeStyle=CARD.ink3;c.lineWidth=1.5;for(let k=x0-20;k<x0+w+20;k+=5){c.beginPath();c.moveTo(k,y+th);c.lineTo(k+12,y);c.stroke()}c.restore()}}
+  const step=span>9000?3600:1800;for(let t=Math.ceil(A.start/step)*step;t<=A.end;t+=step){const x=X(t);if(x<tx+20||x>tx+tw-20)continue;txt(clock(t),x,y+th+16,`500 11px ${FM}`,CARD.ink3,"center","ltr")}
+  txt(clock(A.start),tx,y+th+16,`500 11px ${FM}`,CARD.ink3,"left","ltr");txt(clock(A.end),tx+tw,y+th+16,`500 11px ${FM}`,CARD.ink3,"right","ltr");
+  y+=th+26+22;
+  // legend
+  let lx=R;[["موجود",CARD.accent],["خرج",CARD.low],["خرج وقت البريك",CARD.ink3]].forEach(([l,col])=>{rr(lx-12,y-9,12,8,2,col);c.font=`500 12px ${FB}`;txt(l,lx-18,y,`500 12px ${FB}`,CARD.ink2);lx-=c.measureText(l).width+38});
+  y+=24;
+  // log
+  c.fillStyle=CARD.rule;c.fillRect(R-1,y-6,2,ev.length*lineH-8);
+  ev.forEach((e,i)=>{const yy=y+i*lineH+10;const col={in:CARD.accent,out:CARD.low,brk:CARD.ink3,blip:CARD.mid,end:CARD.ink}[e.k];
+    c.beginPath();c.arc(R,yy-5,e.k==="blip"?3.5:4.5,0,Math.PI*2);c.fillStyle=col;c.fill();
+    const tm=(e.sec?clockS(e.t):clock(e.t))+(e.b&&e.k!=="blip"?" → "+clock(e.b):"");
+    txt(tm,R-18,yy,`500 13px ${FM}`,CARD.ink2,"right","ltr");
+    c.font=`500 13px ${FM}`;const tw2=Math.max(110,c.measureText(tm).width);
+    txt(e.txt,R-18-tw2-16,yy,`${e.k==="blip"?"400 13px":"500 14px"} ${FB}`,e.k==="blip"?CARD.ink2:CARD.ink)});
+  y+=ev.length*lineH+14;
+  c.fillStyle=CARD.rule;c.fillRect(P,y,W-2*P,1);y+=22;
+  const iso=t=>"\u2066"+t+"\u2069";
+  txt(`المحاضرة ${iso(clock(A.start)+"–"+clock(A.end))}${A.brk.length?" · البريك "+A.brk.map(([a,b])=>iso(clock(a)+"–"+clock(b))).join(" و "):""} · البريك مش محسوب من النسبة`,R,y,`500 12px ${FB}`,CARD.ink3);
+  return cv;
+}
+async function fontsReady(){try{await Promise.all([document.fonts.load(`600 26px "Readex Pro"`),document.fonts.load(`500 14px "IBM Plex Sans Arabic"`),document.fonts.load(`500 13px "JetBrains Mono"`)])}catch(e){}}
+async function copyCard(name){
+  if(!lastDay||!lastDay.A)return;
+  const r=lastDay.A.rows.find(x=>x.n===name);if(!r)return;
+  await fontsReady();
+  const blob=await new Promise(res=>drawCard(r,lastDay.A,lastDay.date,lastDay.title).toBlob(res,"image/png"));
+  const file=`${name.split(" ").slice(0,2).join("-")}-${lastDay.date}.png`;
+  const d=dlNs||await getDl();
+  if(!d){showCard(blob,name,"التنزيل مش متاح في العرض ده (افتح الأداة في صفحة لوحدها على المتصفح عشان يشتغل).");return}
+  try{await d.save({filename:file,data:blob});toast("الصورة اتنزّلت")}
+  catch(e){const c=e&&e.code;if(c==="declined"){toast("التنزيل اتلغى");return}if(c==="rate_limited"){toast("فيه رسالة تنزيل مفتوحة، استنى ثانية");return}
+    showCard(blob,name,`التنزيل ماشتغلش (${c||"unknown"}).`)}
+}
+function showCard(blob,name,why){
+  const url=URL.createObjectURL(blob);
+  const m=document.createElement("div");m.className="modal";m.setAttribute("role","dialog");m.setAttribute("aria-label","صورة الملخص");
+  m.innerHTML=`<div class="mbox"><div class="mtop"><b>صورة ملخص ${esc(name.split(" ").slice(0,2).join(" "))}</b><button class="x" data-close type="button" aria-label="اقفل">✕</button></div>
+    <p>${esc(why)} اعمل كليك يمين على الصورة واختار <b>Save image as</b> أو <b>Copy image</b>، أو على الموبايل اضغط عليها مطوّل.</p>
+    <img alt="ملخص ${esc(name)}" src="${url}"><div class="row-actions"><button class="btn" data-save type="button">نزّل الصورة</button><button class="btn ghost" data-close type="button">اقفل</button></div></div>`;
+  document.body.appendChild(m);
+  const close=()=>{m.remove();URL.revokeObjectURL(url)};
+  m.addEventListener("click",e=>{if(e.target===m||e.target.closest("[data-close]"))close()});
+  m.querySelector("[data-save]").onclick=async()=>{const d=dlNs||await getDl();if(!d){toast("التنزيل مش متاح هنا، انسخ الصورة بكليك يمين");return}
+    try{await d.save({filename:`attendance-${lastDay.date}-${name.split(" ")[0]}.png`,data:blob});toast("اتنزّلت")}catch(e){if(e&&e.code!=="declined")toast("التنزيل ماشتغلش")}};
+}
+function reportText(A,date,title){
+  const L=[`حضور ${dayName(date)} ${dmy(date)}${title?" — "+title:""}`,`حضر ${A.rows.length} من ${cfg.roster.length} · المحاضرة ${clock(A.start)}–${clock(A.end)}${A.brk.length?" · بريك "+A.brk.map(([a,b])=>clock(a)+"–"+clock(b)).join(" و "):""}`,""];
+  A.rows.forEach((r,i)=>L.push(`${i+1}. ${r.n} — ${dur(r.total)} (${r.pct}%)${r.notes.length?" · "+r.notes.join("، "):""}`));
+  L.push("",`الغياب (${A.absent.length}): ${A.absent.join("، ")||"مفيش"}`);
+  return L.join("\n");
+}
+async function copyText(t,holder){
+  try{await navigator.clipboard.writeText(t);toast("اتنسخ، الصقه في أي حتة")}
+  catch(e){holder.innerHTML=`<div style="padding:0 20px 16px"><textarea class="copybox" readonly></textarea></div>`;const ta=holder.querySelector("textarea");ta.value=t;ta.focus();ta.select();toast("علّم النص وانسخه")}
+}
+let dlNs=null,dlReady=null;
+const STANDALONE=!(window.claude&&window.claude.use);
+const browserDl={async save({filename,data}){const blob=data instanceof Blob?data:new Blob([data],{type:"text/csv;charset=utf-8"});const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}};
+function getDl(){if(!dlReady)dlReady=(async()=>{if(STANDALONE){dlNs=browserDl;return dlNs}try{dlNs=await window.claude.use("downloads")}catch(e){dlNs=null}return dlNs})();return dlReady}
+async function offerFile(filename,text){
+  const holder=$("#copyHolder")||$("#view");
+  holder.querySelectorAll(".csvfb").forEach(n=>n.remove());
+  const fallback=why=>{holder.insertAdjacentHTML("beforeend",`<div style="padding:0 20px 16px" class="csvfb"><p style="margin:0 0 6px;color:var(--ink-2);font-size:.85rem">${why} انسخ النص ده والصقه في Excel على طول، أو احفظه في ملف ${esc(filename)}.</p><textarea class="copybox" readonly></textarea></div>`);const el=holder.querySelector(".csvfb textarea");el.value=text;el.focus();el.select()};
+  const d=dlNs||await getDl();
+  if(!d){fallback("التنزيل مش متاح في العرض ده.");return}
+  try{
+    await d.save({filename,data:new Blob(["\uFEFF"+text],{type:"text/csv;charset=utf-8"})});
+    toast("اتنزّل الملف");
+  }catch(e){
+    const c=e&&e.code;
+    if(c==="declined"){toast("التنزيل اتلغى");return}
+    if(c==="rate_limited"){toast("فيه رسالة تنزيل مفتوحة، استنى ثانية وجرب تاني");return}
+    fallback(`التنزيل ماشتغلش (${esc(c||"unknown")}).`);
+  }
+}
+async function saveCSV(A,date){
+  const q=s=>`"${String(s).replace(/"/g,'""')}"`;
+  const lines=[["#","Student","Total","Percent","Status","First join","Last leave","Notes"].map(q).join(",")];
+  A.rows.forEach((r,i)=>lines.push([i+1,r.n,dur(r.total),r.pct+"%",r.status[1],clock(r.iv[0][0]),clock(r.iv[r.iv.length-1][1]),r.notes.join(" | ")].map(q).join(",")));
+  A.absent.forEach(n=>lines.push(["",n,"0m","0%","غياب","","",""].map(q).join(",")));
+  offerFile(`attendance-${date}.csv`,lines.join("\r\n"));
+}
+
+/* ---------- quiz (Socrative) ---------- */
+const PCT=/^(\d{1,3}(?:\.\d+)?)\s*%$/;
+function cleanTitle(t){return String(t||"").replace(/\(\s*'?copy'?\s*\)/gi,"").replace(/\s+/g," ").trim()}
+function scoreVal(v){
+  if(v==null||v==="")return null;
+  if(typeof v==="number")return v<=1&&String(v).includes(".")?Math.round(v*1000)/10:v;
+  const t=String(v).trim();let m=PCT.exec(t);if(m)return +m[1];
+  m=/^(\d+)\s*\/\s*(\d+)$/.exec(t);if(m&&+m[2])return Math.round(+m[1]/+m[2]*1000)/10;
+  if(/^\d+(\.\d+)?$/.test(t)){const n=+t;return n<=1&&t.includes(".")?n*100:n}
+  return null;
+}
+function parseQuizText(text){
+  const lines=text.replace(/^﻿/,"").split(/\r?\n/).map(l=>l.replace(/\s+$/,""));
+  const nonEmpty=lines.map(l=>l.trim()).filter(Boolean);
+  if(!nonEmpty.length)throw new Error("النص فاضي.");
+  const title=cleanTitle(nonEmpty.find(l=>/\(\s*'?copy'?\s*\)/i.test(l))||nonEmpty.find(l=>!/^\[.*\]\(http/.test(l))||nonEmpty[0]);
+  const entries=[],questions=[];
+  // tab-separated rows (copied as a table)
+  const tabbed=lines.filter(l=>l.includes("\t"));
+  if(tabbed.length>3){
+    for(const l of tabbed){const c=l.split("\t").map(x=>x.trim());const name=c.find(x=>x&&!PCT.test(x)&&!/^\d+$/.test(x));const sc=c.find(x=>PCT.test(x));
+      if(name&&sc&&!/class total|class scoring|^name$/i.test(name))entries.push({name,score:+PCT.exec(sc)[1]})}
+  }
+  if(!entries.length){
+    const L=nonEmpty;let stop=L.findIndex(l=>/^class total$/i.test(l));if(stop<0)stop=L.length;
+    let from=L.findIndex(l=>/^progress\s*score|^score\s*%/i.test(l));if(from<0||from>stop)from=0;
+    const SUMMARY=/completion|avg\.?\s*score|average|pass rate|students?$|class total|overview|activity|insights|show (names|responses|results)/i;
+    for(let i=Math.max(1,from+1);i<stop;i++){const m=PCT.exec(L[i]);if(!m)continue;const prev=L[i-1];
+      if(!prev||PCT.test(prev)||/^\d+$/.test(prev)||/^(name|ascending|descending|progress|score)/i.test(prev)||SUMMARY.test(prev))continue;
+      entries.push({name:prev.replace(/\s+/g," ").trim(),score:+m[1]})}
+    if(stop<L.length){
+      const after=L.slice(stop+1);
+      const labels=after.filter(l=>/^\d+\s*\[?\s*view question/i.test(l)).map(l=>"س"+parseInt(l));
+      const pcts=after.filter(l=>PCT.test(l)).map(l=>+PCT.exec(l)[1]);
+      const take=pcts.slice(-labels.length||undefined);
+      labels.forEach((lb,i)=>{if(take[i]!=null)questions.push({label:lb,pct:take[i]})});
+    }
+  }
+  if(!entries.length)throw new Error("مالقيتش أسامي ودرجات في النص ده. انسخ صفحة النتايج من Socrative وفيها Show Names وShow Results شغالين، أو ارفع الشيت.");
+  return {title,entries,questions,src:"paste",at:Date.now()};
+}
+async function loadXLSX(){
+  if(window.XLSX)return window.XLSX;
+  if(!xlsxLib)xlsxLib=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";sc.onload=()=>res(window.XLSX);sc.onerror=()=>{xlsxLib=null;rej(new Error("ماقدرتش أحمّل قارئ ملفات Excel. جرّب تاني، أو انسخ النتايج من Socrative والصقها."))};document.head.appendChild(sc)});
+  return xlsxLib;
+}
+async function sheetRows(buf){
+  const X=await loadXLSX();const wb=X.read(buf,{type:"array"});
+  let best=null;
+  for(const n of wb.SheetNames){const rows=X.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:""});
+    if(rows.some(r=>r.some(c=>/student\s*names?|^name$/i.test(String(c).trim())))){best=rows;break}if(!best)best=rows}
+  if(!best)throw new Error("الشيت فاضي.");
+  return best;
+}
+function parseQuizRows(rows,fname){
+  const S=v=>String(v??"").trim();
+  const hi=rows.findIndex(r=>r.some(c=>/student\s*names?|^name$/i.test(S(c))));
+  if(hi<0){return parseQuizText(rows.map(r=>r.map(S).filter(Boolean).join("\t")).join("\n"))}
+  const head=rows[hi].map(S);
+  const nameCol=head.findIndex(c=>/student\s*names?|^name$/i.test(c));
+  let scoreCol=head.findIndex(c=>/total score/i.test(c));if(scoreCol<0)scoreCol=head.findIndex(c=>/score|%|percent/i.test(c)&&!/number/i.test(c));
+  const firstQ=Math.max(scoreCol,head.findIndex(c=>/number of correct|# correct/i.test(c)))+1;
+  const qCols=[];for(let c=firstQ;c<head.length;c++)if(head[c])qCols.push(c);
+  let title="";for(let r=0;r<hi;r++){const t=rows[r].map(S).find(Boolean);if(t&&!/^(date|class|room)/i.test(t)){title=t;break}}
+  const entries=[],questions=[];
+  for(let r=hi+1;r<rows.length;r++){
+    const name=S(rows[r][nameCol]);
+    if(/class (total|scoring)|class average/i.test(name)||(!name&&/class (total|scoring)/i.test(rows[r].map(S).join(" ")))){
+      qCols.forEach((c,i)=>{const v=scoreVal(rows[r][c]);if(v!=null)questions.push({label:"س"+(i+1),text:head[c],pct:v})});break}
+    if(!name)continue;
+    let sc=scoreCol>=0?scoreVal(rows[r][scoreCol]):null;
+    if(sc==null){for(const c of rows[r]){const v=scoreVal(c);if(v!=null&&typeof c!=="number"){sc=v;break}}}
+    if(sc!=null)entries.push({name:name.replace(/\s+/g," "),score:sc});
+  }
+  if(!entries.length)throw new Error("لقيت عمود الأسامي بس مالقيتش درجات جنبه.");
+  return {title:cleanTitle(title)||String(fname||"").replace(/\.\w+$/,""),entries,questions,src:"sheet",at:Date.now()};
+}
+function setQuiz(q){quiz=q;LS.set("att.quiz",q)}
+function resolveQuiz(raw){
+  const key=norm(raw);const a=cfg.qaliases[key];
+  if(a===IGN)return {to:IGN,key};
+  if(a&&cfg.roster.includes(a))return {to:a,key,how:"alias"};
+  const ta=cfg.aliases[key];if(ta&&ta!==IGN&&cfg.roster.includes(ta))return {to:ta,key,how:"alias"};
+  const ranked=cfg.roster.map(n=>({n,s:scoreName(key,norm(n))})).sort((x,y)=>y.s-x.s);
+  const best=ranked[0]||{s:0},second=ranked[1]||{s:0},toks=key.split(" ").filter(Boolean).length;
+  if(toks>=2&&best.s>=.8&&best.s-second.s>=.08)return {to:best.n,key,how:"fuzzy"};
+  return {to:null,key,guess:best.s>=.5?best.n:"",tie:second.s&&best.s-second.s<.08?second.n:""};
+}
+function qstatus(p){return p>=85?["full","ممتاز"]:p>=70?["good","جيد"]:p>=50?["part","مقبول"]:["low","ضعيف"]}
+function analyzeQuiz(q){
+  const per={},review={},ignored=[];
+  for(const e of q.entries){
+    const r=resolveQuiz(e.name);
+    if(r.to===IGN){ignored.push({...e,key:r.key});continue}
+    if(r.to){(per[r.to]=per[r.to]||[]).push({raw:e.name,score:e.score});continue}
+    (review[r.key]=review[r.key]||{raw:e.name,key:r.key,guess:r.guess,tie:r.tie,scores:[]}).scores.push(e.score);
+  }
+  const rows=Object.entries(per).map(([n,att])=>{const best=Math.max(...att.map(a=>a.score));return {n,att,best,status:qstatus(best)}}).sort((a,b)=>b.best-a.best||a.n.localeCompare(b.n));
+  const took=new Set(rows.map(r=>r.n)),missing=cfg.roster.filter(n=>!took.has(n));
+  // only pre-pick a student when every word of the quiz name fits them and they haven't been matched already
+  for(const r of Object.values(review)){
+    const T=r.key.split(" ").filter(Boolean),pick=n=>{const W=norm(n).split(" ");return T.every((t,i)=>W.some(w=>sim(t,w)>=.8))&&sim(T[0],W[0])>=.8};
+    const fits=cfg.roster.filter(n=>!took.has(n)&&pick(n));
+    r.guess=fits.length===1?fits[0]:"";r.tie=fits.length===2?fits[1]:"";if(fits.length===2)r.guess=fits[0];
+    r.hint=!r.guess?(cfg.roster.map(n=>({n,s:scoreName(r.key,norm(n))})).sort((a,b)=>b.s-a.s)[0]||{}):null;
+  }
+  const avg=rows.length?rows.reduce((t,r)=>t+r.best,0)/rows.length:0;
+  return {rows,review:Object.values(review),ignored,missing,avg};
+}
+function attendanceMap(){
+  if(!current)return null;
+  try{const up=dayFromUpload(current.up);const A=analyze(up.studentsIv,cfg.roster,current.breaks??null);if(!A)return null;
+    const m={};A.rows.forEach(r=>m[r.n]=r.pct);return {m,date:up.date}}catch(e){return null}
+}
+function renderQuiz(){
+  const v=$("#view");
+  if(!quiz){v.innerHTML=`<div class="sheet"><div class="empty"><h2>حلّل كويز آخر السيشن</h2>
+    <p>ارفع الشيت اللي بتعمله Export من Socrative، أو افتح صفحة النتايج على Socrative، علّم كل حاجة (Ctrl+A) وانسخها، وبعدين دوس <b>لصق الجدول</b> فوق.</p>
+    <p style="font-size:.85rem;color:var(--ink-3)">هطلعلك درجة كل طالب من طلابك، مين ماحلّش، وأصعب الأسئلة. أي حد مش من طلابك تقدر تحذفه.</p></div></div>`;return}
+  const Q=analyzeQuiz(quiz),att=attendanceMap(),tot=cfg.roster.length;
+  const bands={full:0,good:0,part:0,low:0};Q.rows.forEach(r=>bands[r.status[0]]++);
+  const seg=(k,c)=>tot?`<i style="width:${c/tot*100}%;background:var(--${k})"></i>`:"";
+  const hi=Q.rows.length?Q.rows[0]:null,lo=Q.rows.length?Q.rows[Q.rows.length-1]:null;
+  let html=`<div class="sheet"><div class="sheet-head">
+    <div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div class="eyebrow">كويز Socrative</div><div class="dayline"><h2 class="ltr" style="text-align:start">${esc(quiz.title||"الكويز")}</h2></div></div>
+    <div class="facts">
+      <div class="fact"><b class="num">${Q.rows.length}<small style="font-size:.8rem;color:var(--ink-3)"> / ${tot}</small></b><span>حلّوا</span></div>
+      <div class="fact"><b class="num ltr">${Q.rows.length?Math.round(Q.avg)+"%":"—"}</b><span>متوسط طلابك</span></div>
+      <div class="fact"><b class="num ltr">${hi?Math.round(hi.best)+"%":"—"}</b><span>أعلى درجة</span></div>
+      <div class="fact"><b class="num ltr">${lo?Math.round(lo.best)+"%":"—"}</b><span>أقل درجة</span></div>
+      <div class="fact" style="justify-content:center;gap:6px"><div class="bar-summary">${seg("ok",bands.full)}${seg("mid",bands.good)}${seg("part",bands.part)}${seg("low",bands.low)}</div><span>${bands.full} ممتاز · ${bands.good} جيد · ${bands.part} مقبول · ${bands.low} ضعيف · ${Q.missing.length} ماحلّوش</span></div>
+    </div></div>`;
+  if(Q.review.length) html+=reviewPanel(Q.review.map(r=>({raw:r.raw,guess:r.guess,tie:r.tie,hint:!r.guess,meta:r.scores.map(x=>Math.round(x)+"%").join("، ")})),"الكويز");
+  if(Q.rows.length){
+    html+=`<div class="tbl-wrap"><table class="qtbl"><thead><tr><th>#</th><th>الطالب</th><th style="min-width:200px">الدرجة</th><th>%</th><th>التقدير</th><th>ملاحظات</th>${att?`<th>حضور ${dmy(att.date)}</th>`:""}</tr></thead><tbody>`+
+    Q.rows.map((r,i)=>{const notes=[];if(r.att.length>1)notes.push(`حل ${r.att.length} مرات: ${r.att.map(a=>Math.round(a.score)+"%").join("، ")} · اتحسب الأعلى`);
+      const ap=att?att.m[r.n]:undefined;
+      return `<tr><td class="rank num">${i+1}</td><td class="name"><bdi>${esc(r.n)}</bdi><small class="ltr" style="text-align:start">${esc([...new Set(r.att.map(a=>a.raw))].join(" · "))}</small></td>
+      <td><div class="qbar"><i class="${r.status[0]}" style="width:${Math.max(1,r.best)}%"></i></div></td>
+      <td class="tot num">${Math.round(r.best)}%</td><td><span class="st ${r.status[0]}">${r.status[1]}</span></td>
+      <td><div class="notes">${notes.map(esc).join("<br>")||'<span style="color:var(--ink-3)">—</span>'}</div></td>
+      ${att?`<td class="num">${ap==null?'<span class="st abs">غايب</span>':`<span class="st ${status(ap)[0]}">${ap}%</span>`}</td>`:""}</tr>`}).join("")+`</tbody></table></div>`;
+  }
+  html+=`<div class="absent"><h3>ماحلّوش (${Q.missing.length})</h3>${Q.missing.length?Q.missing.map(n=>{const ap=att?att.m[n]:undefined;return `<span class="chip${att&&ap!=null?" warnchip":""}"><bdi>${esc(n)}</bdi>${att?(ap!=null?` · حضر ${ap}%`:" · غايب"):""}</span>`}).join(""):'<span class="chip muted">كل الطلبة حلّوا</span>'}</div>`;
+  if(quiz.questions&&quiz.questions.length){
+    const sorted=[...quiz.questions].sort((a,b)=>a.pct-b.pct),hard=new Set(sorted.slice(0,2).map(q=>q.label));
+    html+=`<div class="qs"><div class="oh" style="padding:0"><h3>الأسئلة</h3><span>نسبة الإجابات الصح على كل سؤال، من كل اللي حلّوا الكويز (مش طلابك بس)</span></div>
+      <div class="qgrid">${quiz.questions.map(q=>`<div class="qq${hard.has(q.label)?" hard":""}" title="${esc(q.text||q.label)}"><div class="qcol"><i style="height:${Math.max(2,q.pct)}%" class="${qstatus(q.pct)[0]}"></i></div><b class="num ltr">${Math.round(q.pct)}%</b><span>${esc(q.label)}</span></div>`).join("")}</div>
+      <p class="dnote">أصعب سؤالين: ${sorted.slice(0,2).map(q=>`${esc(q.label)} (${Math.round(q.pct)}%)`).join(" و ")}${sorted[0]&&sorted[0].text?` · ${esc(sorted[0].text).slice(0,120)}`:""}</p></div>`;
+  }
+  if(Q.ignored.length){
+    html+=`<details class="auto"><summary>اتحذفوا لأنهم مش من طلابك (${Q.ignored.length})</summary><div class="amap">${Q.ignored.map(e=>`<div><span class="from ltr">${esc(e.name)}</span><span class="to num">${Math.round(e.score)}%</span><button class="x" data-qback="${esc(e.key)}" type="button">رجّعه</button></div>`).join("")}</div></details>`;
+  }
+  html+=`<div class="foot"><div class="legend">${att?`عمود الحضور من ملف تيمز اللي مرفوع (${dayName(att.date)} ${dmy(att.date)})`:"ارفع ملف الحضور كمان عشان تشوف مين حضر وماحلّش"}</div>
+    <div class="row-actions">${Q.rows.length?`<button class="btn" id="qCopy" type="button">انسخ النتيجة</button><button class="btn" id="qCsv" type="button">نزّل CSV</button>`:""}<button class="btn ghost danger" id="qClear" type="button">امسح الكويز</button></div></div><div id="copyHolder"></div></div>`;
+  v.innerHTML=html;
+  wireReview(v,Q.review.length,(i,val)=>{cfg.qaliases[Q.review[i].key]=val});
+  v.querySelectorAll("[data-qback]").forEach(b=>b.onclick=()=>{delete cfg.qaliases[b.dataset.qback];persistCfg();render()});
+  const qc=$("#qCopy");if(qc)qc.onclick=()=>copyText(quizText(Q,att),$("#copyHolder"));
+  const qv=$("#qCsv");if(qv)qv.onclick=()=>{const q=s=>`"${String(s).replace(/"/g,'""')}"`;
+    const lines=[["#","Student","Score","Grade","Attempts",att?"Attendance":""].filter(Boolean).map(q).join(",")];
+    Q.rows.forEach((r,i)=>lines.push([i+1,r.n,Math.round(r.best)+"%",r.status[1],r.att.map(a=>Math.round(a.score)+"%").join(" | "),...(att?[att.m[r.n]==null?"غايب":att.m[r.n]+"%"]:[])].map(q).join(",")));
+    Q.missing.forEach(n=>lines.push(["",n,"ماحلّش","","",...(att?[att.m[n]==null?"غايب":att.m[n]+"%"]:[])].map(q).join(",")));
+    offerFile(`quiz-${(quiz.title||"results").replace(/[^\w-]+/g,"-").slice(0,40)}.csv`,lines.join("\r\n"))};
+  const qx=$("#qClear");qx.onclick=()=>{if(qx.dataset.sure!=="1"){qx.dataset.sure="1";qx.textContent="اضغط تاني للتأكيد";setTimeout(()=>{if(qx.isConnected){qx.dataset.sure="";qx.textContent="امسح الكويز"}},4000);return}
+    quiz=null;LS.del("att.quiz");render();toast("اتمسح")};
+}
+function quizText(Q,att){
+  const L=[`نتيجة كويز: ${quiz.title||""}`,`حل ${Q.rows.length} من ${cfg.roster.length} · المتوسط ${Math.round(Q.avg)}%`,""];
+  Q.rows.forEach((r,i)=>L.push(`${i+1}. ${r.n} — ${Math.round(r.best)}%${r.att.length>1?` (حل ${r.att.length} مرات)`:""}`));
+  L.push("",`ماحلّوش (${Q.missing.length}): ${Q.missing.map(n=>n+(att?(att.m[n]!=null?" [حضر]":" [غايب]"):"")).join("، ")||"مفيش"}`);
+  return L.join("\n");
+}
+
+/* ---------- settings ---------- */
+function renderSet(){
+  const v=$("#view");
+  const al=[...Object.entries(cfg.aliases).map(([k,x])=>[k,x,"t"]),...Object.entries(cfg.qaliases||{}).map(([k,x])=>[k,x,"q"])].filter(([k,x])=>x&&x!=="__review__").sort((a,b)=>String(a[1]).localeCompare(String(b[1])));
+  const ids=Object.entries(cfg.ids);
+  v.innerHTML=`<div class="grid2">
+    <section class="card"><h2>قايمة الطلبة</h2><p>${cfg.roster.length?"اسم في كل سطر، زي ما هو متسجل عندك على السيستم. لو حد اتشال أو اتضاف عدّل هنا.":"<b>ابدأ من هنا:</b> الصق أسامي طلبة المجموعة، اسم في كل سطر زي ما هو متسجل على السيستم، واضغط احفظ القايمة."}</p>
+      <textarea id="rosterTa" aria-label="قايمة الطلبة">${esc(cfg.roster.join("\n"))}</textarea>
+      <div class="row-actions"><button class="btn primary" id="rosterSave" type="button">احفظ القايمة</button><span class="num" style="color:var(--ink-3);align-self:center">${cfg.roster.length} طالب</span></div></section>
+    <section class="card"><h2>الأسامي المحفوظة</h2><p>الأسامي اللي الطلبة بيدخلوا بيها على تيمز أو الكويز ومش شبه اسمهم، والأسامي اللي حذفتها. امسح أي ربط غلط وهيرجع يسألك عنه.</p>
+      <div class="list">${al.length?al.map(([k,x,w])=>`<div class="li"><span class="src">${w==="q"?"كويز":"تيمز"}</span><span class="a">${esc(k)}</span><span>←</span><span class="b">${x===IGN?'<span style="color:var(--ink-3)">محذوف</span>':`<bdi>${esc(x)}</bdi>`}</span><button class="x" data-dal="${esc(k)}" data-w="${w}" aria-label="امسح" type="button">✕</button></div>`).join(""):'<p>مفيش لسه.</p>'}</div>
+      <h3 style="font-size:.95rem;margin-top:6px">أرقام الطلبة</h3>
+      <div class="list">${ids.length?ids.map(([k,x])=>`<div class="li"><span class="a num">${esc(k)}</span><span>←</span><span class="b"><bdi>${esc(x)}</bdi></span><button class="x" data-did="${esc(k)}" aria-label="امسح" type="button">✕</button></div>`).join(""):'<p>مفيش لسه.</p>'}</div>
+      <h3 style="font-size:.95rem;margin-top:6px">إيميلات بتتجاهل</h3><p>أي حد داخل بإيميل من الدومينات دي (المدرب أو حد من الشركة) مش بيتحسب.</p>
+      <input type="text" id="domIn" value="${esc(cfg.ignoreDomains.join(", "))}" aria-label="الدومينات"><div><button class="btn" id="domSave" type="button">احفظ</button></div>
+    </section></div>
+    <section class="card reset"><div class="rsh"><div><h2>مجموعة جديدة</h2><p>لما جروب يخلص ويبدأ جروب جديد: بيمسح قايمة الطلبة، والأسامي اللي ربطتها أو حذفتها، وأرقام الطلبة، وملف الحضور والكويز المرفوعين. الإيميلات اللي بتتجاهل بتفضل زي ما هي.</p></div>
+      <button class="btn danger" id="resetAll" type="button">ابدأ مجموعة جديدة</button></div></section>
+    <p style="color:var(--ink-3);font-size:.8rem;margin:0">القايمة والأسامي محفوظين على المتصفح ده بس. لو فتحت الأداة من جهاز أو متصفح تاني هتبدأ بالقايمة الأصلية.</p>`;
+  $("#rosterSave").onclick=()=>{cfg.roster=[...new Set($("#rosterTa").value.split(/\r?\n/).map(s=>s.trim().replace(/\s+/g," ")).filter(Boolean))];persistCfg();render();toast("القايمة اتحفظت")};
+  v.querySelectorAll("[data-dal]").forEach(b=>b.onclick=()=>{delete (b.dataset.w==="q"?cfg.qaliases:cfg.aliases)[b.dataset.dal];persistCfg();render()});
+  v.querySelectorAll("[data-did]").forEach(b=>b.onclick=()=>{delete cfg.ids[b.dataset.did];persistCfg();render()});
+  const rs=$("#resetAll");rs.onclick=()=>{
+    if(rs.dataset.sure!=="1"){rs.dataset.sure="1";rs.textContent="متأكد؟ اضغط تاني وهيتمسح كله";setTimeout(()=>{if(rs.isConnected){rs.dataset.sure="";rs.textContent="ابدأ مجموعة جديدة"}},5000);return}
+    cfg=Object.assign(structuredClone(DEF_CFG),{ignoreDomains:cfg.ignoreDomains,qaliases:{}});persistCfg();
+    current=null;quiz=null;openName=null;LS.del("att.last");LS.del("att.quiz");render();toast("اتمسح كله، حط أسامي المجموعة الجديدة");setTimeout(()=>{const t=$("#rosterTa");if(t)t.focus()},50)};
+  $("#domSave").onclick=()=>{cfg.ignoreDomains=$("#domIn").value.split(/[,\s]+/).map(s=>s.trim().replace(/^@/,"")).filter(Boolean);persistCfg();render();toast("اتحفظ")};
+}
+
+function render(){
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",t.dataset.view===view?"true":"false"));
+  if(view==="day")renderDay();else if(view==="quiz")renderQuiz();else renderSet();
+  const q=view==="quiz";$("#dropTitle").textContent=q?"اسحب نتيجة الكويز هنا":"اسحب ملف الـ Attendance هنا";
+  $("#dropSub").textContent=q?"الشيت اللي بيتعمله Export من Socrative (xlsx أو csv)، أو انسخ صفحة النتايج من Socrative والصقها.":"الملف اللي بينزل من تيمز، أو الصق الجدول نفسه لو نسخته.";
+}
+
+/* ---------- input ---------- */
+function ingest(text){
+  if(!cfg.roster.length){setBanner("حط أسامي الطلبة الأول في تبويب <b>الطلبة والأسماء</b>، وبعدها ارفع الملف تاني.","warn");view="set";render();return}
+  const isTeams=/join time/i.test(text)&&/leave time/i.test(text);
+  try{
+    if(isTeams){const up=parseReport(text);current={kind:"upload",up,breaks:null};openName=null;persistLast();view="day"}
+    else{const q=parseQuizText(text);setQuiz(q);view="quiz"}
+    setBanner("");render();window.scrollTo({top:0,behavior:"smooth"});
+  }catch(e){setBanner(esc(e.message||"الملف ماتقراش"),"err")}
+}
+async function readFile(f){if(!f)return;
+  const buf=await f.arrayBuffer().catch(()=>null);if(!buf){setBanner("ماقدرتش أفتح الملف، جرّب تاني","err");return}
+  const b=new Uint8Array(buf);
+  if(b[0]===0x50&&b[1]===0x4B||/\.xlsx?$/i.test(f.name)){
+    if(!cfg.roster.length){ingest("");return}
+    try{const rows=await sheetRows(buf);setQuiz(parseQuizRows(rows,f.name));view="quiz";setBanner("");render()}
+    catch(e){setBanner(esc(e.message||"الشيت ماتقراش"),"err")}
+    return}
+  ingest(decode(buf));
+}
+$("#file").onchange=e=>{readFile(e.target.files[0]);e.target.value=""};
+const drop=$("#drop");
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop",e=>readFile(e.dataTransfer.files[0]));
+$("#pasteBtn").onclick=()=>{$("#pasteBox").hidden=false;$("#pasteArea").focus()};
+$("#pasteCancel").onclick=()=>{$("#pasteBox").hidden=true};
+$("#pasteGo").onclick=()=>{const t=$("#pasteArea").value;if(!t.trim())return;$("#pasteBox").hidden=true;$("#pasteArea").value="";ingest(t)};
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{view=t.dataset.view;render()});
+
+/* ---------- timeline hover: what was happening at this minute ---------- */
+const tip=$("#tip");
+function tipAt(pc,clientX){
+  const k=pc.dataset.k,a=+pc.dataset.a,b=+pc.dataset.b,ga=+pc.dataset.ga||a,gb=+pc.dataset.gb||b;
+  const T=x=>`<b>${clock(x)}</b>`,D=x=>`<b>${dur(x)}</b>`;
+  let dot="var(--accent)",txt;
+  if(k==="in") txt=`موجود من ${T(a)} لـ ${T(b)} · ${D(b-a)}`;
+  else if(pc.dataset.pre){dot="var(--low)";txt=`لسه مادخلش · دخل ${T(gb)} (متأخر ${D(gb-ga)})`}
+  else if(pc.dataset.post){dot="var(--low)";txt=`خرج ${T(ga)} ومارجعش · ${D(gb-ga)} قبل النهاية`}
+  else if(k==="bo"){dot="var(--ink-3)";txt=`خرج وقت البريك ${T(a)}–${T(b)}`+(gb-ga>b-a+60?` · كان برّه من ${T(ga)} لـ ${T(gb)} (${D(gb-ga)})`:"")}
+  else{dot="var(--low)";txt=`خرج من ${T(ga)} لـ ${T(gb)} · ${D(gb-ga)}`+(gb-ga>b-a+60?` (منهم ${D(b-a)} برّه البريك)`:"")}
+  tip.innerHTML=`<span class="k" style="background:${dot}"></span>${txt}`;tip.hidden=false;
+  const r=pc.getBoundingClientRect();
+  tip.style.left=Math.min(Math.max(clientX,150),innerWidth-150)+"px";tip.style.top=r.top-3+"px";
+}
+function tipOff(){tip.hidden=true}
+document.addEventListener("pointermove",e=>{const pc=e.target.closest&&e.target.closest(".tl .pc");if(pc)tipAt(pc,e.clientX);else if(!tip.hidden&&e.pointerType==="mouse")tipOff()});
+document.addEventListener("pointerdown",e=>{const pc=e.target.closest&&e.target.closest(".tl .pc");if(pc)tipAt(pc,e.clientX);else tipOff()});
+document.addEventListener("scroll",tipOff,{passive:true,capture:true});
+getDl();
+
+/* boot */
+initStore();if(!cfg.roster.length)view="set";render();
+})();
+</script>
+
+</body>
+</html>
