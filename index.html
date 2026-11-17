@@ -120,6 +120,9 @@ button{cursor:pointer}
 .mtop{display:flex;justify-content:space-between;align-items:center}
 .mbox p{margin:0;font-size:.88rem;color:var(--ink-2)}
 .mbox img{width:100%;border:1px solid var(--rule);border-radius:10px}
+.doms{display:flex;flex-wrap:wrap;gap:6px}
+.dchip{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--rule);border-radius:999px;padding:2px 4px 2px 10px;padding-inline-start:10px;font-size:.85rem;direction:ltr}
+.domadd{display:flex;gap:8px}.domadd input{flex:1;min-width:0}
 .reset{border-color:var(--low-soft)}
 .rsh{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
 .rsh>div{flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:6px}
@@ -987,7 +990,8 @@ function renderSet(){
       <h3 style="font-size:.95rem;margin-top:6px">أرقام الطلبة</h3>
       <div class="list">${ids.length?ids.map(([k,x])=>`<div class="li"><span class="a num">${esc(k)}</span><span>←</span><span class="b"><bdi>${esc(x)}</bdi></span><button class="x" data-did="${esc(k)}" aria-label="امسح" type="button">✕</button></div>`).join(""):'<p>مفيش لسه.</p>'}</div>
       <h3 style="font-size:.95rem;margin-top:6px">إيميلات بتتجاهل</h3><p>أي حد داخل بإيميل من الدومينات دي (المدرب أو حد من الشركة) مش بيتحسب.</p>
-      <input type="text" id="domIn" value="${esc(cfg.ignoreDomains.join(", "))}" aria-label="الدومينات"><div><button class="btn" id="domSave" type="button">احفظ</button></div>
+      <div class="doms">${cfg.ignoreDomains.map((d,i)=>`<span class="dchip"><bdi>@${esc(d)}</bdi><button class="x" data-ddel="${i}" aria-label="امسح ${esc(d)}" type="button">✕</button></span>`).join("")||'<span style="color:var(--ink-3);font-size:.85rem">مفيش دومينات</span>'}</div>
+      <form class="domadd" id="domForm"><input type="text" id="domIn" placeholder="company.com أو الصق إيميل كامل" aria-label="دومين جديد" autocomplete="off"><button class="btn" type="submit">أضف</button></form>
     </section></div>
     <section class="card reset"><div class="rsh"><div><h2>مجموعة جديدة</h2><p>لما جروب يخلص ويبدأ جروب جديد: بيمسح قايمة الطلبة، والأسامي اللي ربطتها أو حذفتها، وأرقام الطلبة، وملف الحضور والكويز المرفوعين. الإيميلات اللي بتتجاهل بتفضل زي ما هي.</p></div>
       <button class="btn danger" id="resetAll" type="button">ابدأ مجموعة جديدة</button></div></section>
@@ -999,7 +1003,12 @@ function renderSet(){
     if(rs.dataset.sure!=="1"){rs.dataset.sure="1";rs.textContent="متأكد؟ اضغط تاني وهيتمسح كله";setTimeout(()=>{if(rs.isConnected){rs.dataset.sure="";rs.textContent="ابدأ مجموعة جديدة"}},5000);return}
     cfg=Object.assign(structuredClone(DEF_CFG),{ignoreDomains:cfg.ignoreDomains,qaliases:{}});persistCfg();
     current=null;quiz=null;openName=null;LS.del("att.last");LS.del("att.quiz");render();toast("اتمسح كله، حط أسامي المجموعة الجديدة");setTimeout(()=>{const t=$("#rosterTa");if(t)t.focus()},50)};
-  $("#domSave").onclick=()=>{cfg.ignoreDomains=$("#domIn").value.split(/[,\s]+/).map(s=>s.trim().replace(/^@/,"")).filter(Boolean);persistCfg();render();toast("اتحفظ")};
+  $("#domForm").onsubmit=e=>{e.preventDefault();
+    const add=$("#domIn").value.split(/[,;\s]+/).map(x=>x.trim().toLowerCase().replace(/^.*@/,"")).filter(x=>/^[a-z0-9.-]+\.[a-z]{2,}$/.test(x));
+    if(!add.length){toast("اكتب دومين زي company.com");return}
+    const before=cfg.ignoreDomains.length;cfg.ignoreDomains=[...new Set([...cfg.ignoreDomains,...add])];persistCfg();render();
+    toast(cfg.ignoreDomains.length>before?`اتضاف ${cfg.ignoreDomains.length-before}`:"موجود قبل كده");setTimeout(()=>{const i=$("#domIn");if(i)i.focus()},30)};
+  v.querySelectorAll("[data-ddel]").forEach(b=>b.onclick=()=>{cfg.ignoreDomains.splice(+b.dataset.ddel,1);persistCfg();render()});
 }
 
 function render(){
@@ -1013,9 +1022,18 @@ function render(){
 function ingest(text){
   if(!cfg.roster.length){setBanner("حط أسامي الطلبة الأول في تبويب <b>الطلبة والأسماء</b>، وبعدها ارفع الملف تاني.","warn");view="set";render();return}
   const isTeams=/join time/i.test(text)&&/leave time/i.test(text);
+  const want=view==="quiz"?"quiz":"day";
   try{
-    if(isTeams){const up=parseReport(text);current={kind:"upload",up,breaks:null};openName=null;persistLast();view="day"}
-    else{const q=parseQuizText(text);setQuiz(q);view="quiz"}
+    if(isTeams){
+      const up=parseReport(text);current={kind:"upload",up,breaks:null};openName=null;persistLast();
+      if(want==="quiz")toast("ده ملف حضور من تيمز، فتحته في تقرير اليوم");view="day";
+    }else{
+      let q=null;try{q=parseQuizText(text)}catch(e){}
+      if(!q){throw new Error(want==="quiz"
+        ?"مالقيتش أسامي ودرجات في النص ده. انسخ صفحة النتايج من Socrative وفيها Show Names وShow Results شغالين، أو ارفع الشيت."
+        :"الملف ده مش ملف Attendance من تيمز. نزّل التقرير من تيمز (Attendance report) وارفعه زي ما هو، أو انسخ الجدول اللي فيه Join Time وLeave Time والصقه.")}
+      setQuiz(q);if(want==="day")toast("ده شكله نتيجة كويز، فتحته في تبويب الكويز");view="quiz";
+    }
     setBanner("");render();window.scrollTo({top:0,behavior:"smooth"});
   }catch(e){setBanner(esc(e.message||"الملف ماتقراش"),"err")}
 }
@@ -1024,8 +1042,8 @@ async function readFile(f){if(!f)return;
   const b=new Uint8Array(buf);
   if(b[0]===0x50&&b[1]===0x4B||/\.xlsx?$/i.test(f.name)){
     if(!cfg.roster.length){ingest("");return}
-    try{const rows=await sheetRows(buf);setQuiz(parseQuizRows(rows,f.name));view="quiz";setBanner("");render()}
-    catch(e){setBanner(esc(e.message||"الشيت ماتقراش"),"err")}
+    try{const rows=await sheetRows(buf);setQuiz(parseQuizRows(rows,f.name));if(view!=="quiz")toast("ده شكله نتيجة كويز، فتحته في تبويب الكويز");view="quiz";setBanner("");render()}
+    catch(e){setBanner(view==="quiz"?esc(e.message||"الشيت ماتقراش"):"الملف ده مش ملف Attendance من تيمز. ملف الحضور بيبقى CSV بينزل من تيمز، مش Excel.","err")}
     return}
   ingest(decode(buf));
 }
